@@ -91,7 +91,7 @@ reviewer's signal comes from a tight, honest list, not an exhaustive one.
 
 | Layer        | Choice |
 |---|---|
-| Backend      | Python 3.12 · FastAPI · SQLAlchemy 2.0 (typed declarative) · Alembic |
+| Backend      | Python 3.12 · FastAPI · Pydantic 2 · SQLAlchemy 2.0 (typed declarative) · Alembic |
 | Database     | SQLite (`app.db`) |
 | Backend tests| pytest · pytest-asyncio · httpx · factory-boy |
 | Lint / type  | ruff · mypy (strict on `app/domain`, lax elsewhere) |
@@ -142,7 +142,8 @@ api → services → repositories → db
          └→ domain
 ```
 
-- `domain/` imports nothing from the rest of the app. No framework code. Pure Python.
+- `domain/` imports nothing from the rest of the app. Stdlib + `pydantic` (for value-object
+  declarations) only. No web framework, no ORM.
 - `services/` depends on the **repository Protocol**, not the concrete class.
 - `repositories/` is the only place SQLAlchemy is imported.
 - `api/` is thin: parse → call service → return. ≤10 lines per handler.
