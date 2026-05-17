@@ -1,16 +1,12 @@
-from dataclasses import dataclass
 from typing import Self
 
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
-@dataclass(frozen=True)
-class Salary:
-    cents: int
 
-    def __post_init__(self) -> None:
-        if not isinstance(self.cents, int):
-            raise TypeError("Salary cents must be int")
-        if self.cents <= 0:
-            raise ValueError("Salary cents must be positive")
+class Salary(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    cents: StrictInt = Field(gt=0)
 
     @classmethod
     def from_dollars(cls, dollars: int) -> Self:
