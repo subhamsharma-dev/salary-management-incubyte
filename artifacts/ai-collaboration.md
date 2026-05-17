@@ -185,6 +185,31 @@ The harness blocked several actions Claude would have refused anyway:
     explicitly in deployment.
   - `204 No Content` for DELETE (proper REST), not 200 with body.
 
+### Backend deployment (Fly.io)
+- Commits: b3f21e2..418bf2a (Dockerfile + .dockerignore → fly.toml + .env.example → README sync)
+- Approaches proposed: Fly.io | Render (per `trade-offs.md`) → picked **Fly.io** (volumes, free tier).
+- Sub-choice: primary region **`bom`** (Mumbai); 1 GiB volume mounted at `/data`; SQLite at `/data/app.db`.
+- Most useful prompt or moment: surfacing the volume + `DATABASE_URL=sqlite:////data/app.db`
+  pattern explicitly — easy to silently ship a deploy where SQLite writes to ephemeral
+  container storage and loses data on every restart.
+- What I rejected from Claude's suggestions: n/a — accepted Fly.io, `bom`, single-volume layout.
+- What Claude flagged that I would have missed:
+  - `uv sync --frozen --no-dev` for the production image (dev deps stay out).
+  - `COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/` — multi-stage-style copy of
+    the `uv` binary instead of installing it from PyPI.
+  - `auto_stop_machines = "stop"` + `min_machines_running = 0` for cost — cold starts are
+    fine for an HR-tool with one user.
+  - HTTP health check on `/health` so Fly's load balancer can verify liveness.
+  - `Base.metadata.create_all` at lifespan means the schema is created on first cold
+    start; no Alembic step needed yet (per §12).
+- TDD discipline overrides: none — deployment artefacts are "generated, not test-driven"
+  per §12. Verified by reading; production correctness will be verified by `fly deploy`.
+- Notable Rule 5 callouts:
+  - SQLite + Fly.io: persistent volume mounted under a single VM (SQLite is single-writer,
+    horizontal scaling not applicable; fine for this app).
+  - `DATABASE_URL` env var as the sole config knob between local/test/prod.
+  - Deferred: Alembic (until schema evolves), Litestream backup, custom domain, CDN.
+
 ### Backend tooling chore pass
 - Commits: 2988772..83e8d39 (Pydantic strict=True across domain; ruff + mypy with strict-on-domain; Makefile)
 - Approaches proposed: n/a (closing-the-loop chore, not a feature menu)
