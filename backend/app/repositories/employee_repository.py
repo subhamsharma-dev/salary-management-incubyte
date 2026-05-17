@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.country import Country
@@ -11,6 +11,7 @@ from app.domain.employee import Employee
 from app.domain.employment_type import EmploymentType
 from app.domain.salary import Salary
 from app.repositories.orm import EmployeeORM
+from app.repositories.protocol import Page
 
 
 class SqlAlchemyEmployeeRepository:
@@ -41,9 +42,24 @@ class SqlAlchemyEmployeeRepository:
             return None
         return self._to_domain(row)
 
-    def list(self) -> list[Employee]:
-        rows = self._session.scalars(select(EmployeeORM)).all()
-        return [self._to_domain(row) for row in rows]
+    def list(self, *, page: int = 1, page_size: int = 50) -> Page:
+        offset = (page - 1) * page_size
+
+        rows = self._session.scalars(
+            select(EmployeeORM)
+            .order_by(EmployeeORM.full_name, EmployeeORM.id)
+            .offset(offset)
+            .limit(page_size)
+        ).all()
+
+        total = self._session.scalar(select(func.count()).select_from(EmployeeORM)) or 0
+
+        return Page(
+            items=[self._to_domain(row) for row in rows],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     @staticmethod
     def _to_domain(row: EmployeeORM) -> Employee:

@@ -1,7 +1,18 @@
 from typing import Protocol
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict
+
 from app.domain.employee import Employee
+
+
+class Page(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    items: list[Employee]
+    total: int
+    page: int
+    page_size: int
 
 
 class EmployeeRepository(Protocol):
@@ -9,4 +20,4 @@ class EmployeeRepository(Protocol):
 
     def get(self, employee_id: UUID) -> Employee | None: ...
 
-    def list(self) -> list[Employee]: ...
+    def list(self, *, page: int = 1, page_size: int = 50) -> Page: ...
