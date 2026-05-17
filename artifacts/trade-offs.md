@@ -86,3 +86,14 @@ checks; `pydantic.ValidationError <: ValueError` so prior tests stayed valid; co
 with Pydantic already in `schemas/`. Cost: softens §7 to "stdlib + Pydantic" rather than
 "pure stdlib." Documented in `ai-collaboration.md` as a real pivot, not a fabricated
 straight line.
+
+## SQLite percentiles — custom aggregates, not Python-side or window CTE
+
+SQLite has no native `PERCENTILE_CONT`/`PERCENTILE_DISC`. `aggregate_by_country` needs
+median, p25, p75. Picked: register Python aggregates (`p25`, `p50`, `p75`) on every new
+connection via `sqlalchemy.event.listens_for("connect")` in `app/db/engine.py`. Insight
+SQL stays in SQL: `SELECT MIN, MAX, AVG, p25(...), p50(...), p75(...) GROUP BY country`.
+Rejected pulling raw `(country, salary_cents)` rows and grouping/computing in Python
+(violates §7's "SQL aggregates, not Python loops") and pure-SQL NTILE/window CTE (verbose
+and gives discrete rather than interpolated values). Cost: a thin Python bridge runs
+per-group inside SQLite. At 10K rows, negligible.
