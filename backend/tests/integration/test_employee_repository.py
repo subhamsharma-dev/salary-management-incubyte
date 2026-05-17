@@ -120,3 +120,42 @@ def test_repository_list_includes_soft_deleted_when_requested(employee_repositor
     page = employee_repository.list(include_deleted=True)
 
     assert {e.email.address for e in page.items} == {"active@example.com", "deleted@example.com"}
+
+
+def test_repository_list_searches_by_name(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="a@example.com"), full_name="Alice Anderson",
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="b@example.com"), full_name="Bob Brown",
+    )))
+
+    page = employee_repository.list(q="alice")
+
+    assert {e.email.address for e in page.items} == {"a@example.com"}
+
+
+def test_repository_list_searches_by_email(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="alice@example.com"), full_name="Jane Doe",
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="bob@example.com"), full_name="John Doe",
+    )))
+
+    page = employee_repository.list(q="alice")
+
+    assert {e.email.address for e in page.items} == {"alice@example.com"}
+
+
+def test_repository_list_searches_by_job_title(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="a@example.com"), job_title="Senior Engineer",
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="b@example.com"), job_title="Sales Manager",
+    )))
+
+    page = employee_repository.list(q="engineer")
+
+    assert {e.email.address for e in page.items} == {"a@example.com"}
