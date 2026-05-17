@@ -50,6 +50,22 @@ class SqlAlchemyEmployeeRepository:
         row.updated_at = datetime.now(UTC)
         self._session.commit()
 
+    def update(self, employee: Employee) -> None:
+        row = self._session.get(EmployeeORM, employee.id)
+        if row is None:
+            raise ValueError(f"Employee {employee.id} not found")
+        row.full_name = employee.full_name
+        row.email = employee.email.address
+        row.job_title = employee.job_title
+        row.department = employee.department.value
+        row.country = employee.country.code
+        row.salary_cents = employee.salary.cents
+        row.employment_type = employee.employment_type.value
+        row.hire_date = employee.hire_date
+        row.is_deleted = employee.is_deleted
+        row.updated_at = employee.updated_at
+        self._session.commit()
+
     def list(
         self,
         *,
