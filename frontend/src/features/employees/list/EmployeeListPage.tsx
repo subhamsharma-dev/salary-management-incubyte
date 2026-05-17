@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -99,71 +100,76 @@ export function EmployeeListPage() {
 
   return (
     <>
-      <Input
-        type="search"
-        placeholder="Search…"
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-      />
-      <Select value={country ?? 'all'} onValueChange={selectCountry}>
-        <SelectTrigger aria-label="Country">
-          <SelectValue placeholder="Country" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All countries</SelectItem>
-          {COUNTRIES.map((code) => (
-            <SelectItem key={code} value={code}>
-              {code}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={department ?? 'all'} onValueChange={selectDepartment}>
-        <SelectTrigger aria-label="Department">
-          <SelectValue placeholder="Department" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All departments</SelectItem>
-          {DEPARTMENTS.map((d) => (
-            <SelectItem key={d} value={d}>
-              {humanize(d)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Job title</TableHead>
-            <TableHead>Department</TableHead>
-            <TableHead>Country</TableHead>
-            <TableHead aria-label="Actions" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.items.map((employee) => (
-            <TableRow key={employee.id}>
-              <TableCell>{employee.full_name}</TableCell>
-              <TableCell>{employee.email}</TableCell>
-              <TableCell>{employee.job_title}</TableCell>
-              <TableCell>{employee.department}</TableCell>
-              <TableCell>{employee.country}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Delete ${employee.full_name}`}
-                  onClick={() => setDeleteCandidate(employee)}
-                >
-                  <Trash2 />
-                </Button>
-              </TableCell>
+      <div className="flex flex-wrap items-center gap-3">
+        <Input
+          type="search"
+          placeholder="Search…"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="max-w-sm"
+        />
+        <Select value={country ?? 'all'} onValueChange={selectCountry}>
+          <SelectTrigger className="w-[180px]" aria-label="Country">
+            <SelectValue placeholder="Country" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All countries</SelectItem>
+            {COUNTRIES.map((code) => (
+              <SelectItem key={code} value={code}>
+                {code}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={department ?? 'all'} onValueChange={selectDepartment}>
+          <SelectTrigger className="w-[180px]" aria-label="Department">
+            <SelectValue placeholder="Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All departments</SelectItem>
+            {DEPARTMENTS.map((d) => (
+              <SelectItem key={d} value={d}>
+                {humanize(d)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Job title</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead>Country</TableHead>
+              <TableHead className="w-12" aria-label="Actions" />
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data.items.map((employee) => (
+              <TableRow key={employee.id}>
+                <TableCell>{employee.full_name}</TableCell>
+                <TableCell>{employee.email}</TableCell>
+                <TableCell>{employee.job_title}</TableCell>
+                <TableCell>{employee.department}</TableCell>
+                <TableCell>{employee.country}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Delete ${employee.full_name}`}
+                    onClick={() => setDeleteCandidate(employee)}
+                  >
+                    <Trash2 />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
       <Button
         onClick={() =>
           navigate({
