@@ -38,6 +38,20 @@ def test_repository_lists_all_added_employees(employee_repository):
     employee_repository.add(e1)
     employee_repository.add(e2)
 
-    employees = employee_repository.list()
+    page = employee_repository.list()
 
-    assert {e.email.address for e in employees} == {"a@example.com", "b@example.com"}
+    assert {e.email.address for e in page.items} == {"a@example.com", "b@example.com"}
+
+
+def test_repository_list_returns_paginated_page(employee_repository):
+    for i in range(5):
+        employee_repository.add(
+            Employee(**_valid_employee_kwargs(email=Email(address=f"user{i}@example.com")))
+        )
+
+    page = employee_repository.list(page=2, page_size=2)
+
+    assert page.total == 5
+    assert len(page.items) == 2
+    assert page.page == 2
+    assert page.page_size == 2
