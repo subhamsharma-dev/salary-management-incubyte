@@ -166,4 +166,43 @@ describe('EmployeeListPage', () => {
 
     await waitFor(() => expect(receivedDepartment).toBe('engineering'))
   })
+
+  it('shows confirmation dialog and deletes employee on confirm', async () => {
+    let deletedId: string | null = null
+    const employee = {
+      id: '11111111-1111-1111-1111-111111111111',
+      full_name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      job_title: 'Engineer',
+      department: 'engineering',
+      country: 'GB',
+      salary_cents: 12_000_000,
+      employment_type: 'full_time',
+      hire_date: '2024-01-15',
+      is_deleted: false,
+      created_at: '2024-01-15T00:00:00Z',
+      updated_at: '2024-01-15T00:00:00Z',
+    }
+    server.use(
+      http.get('*/employees', () =>
+        HttpResponse.json({ items: [employee], total: 1, page: 1, page_size: 50 }),
+      ),
+      http.delete('*/employees/:id', ({ params }) => {
+        deletedId = params.id as string
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await screen.findByText('Ada Lovelace')
+
+    await userEvent.click(screen.getByRole('button', { name: /delete ada lovelace/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /confirm delete/i }))
+
+    await waitFor(() =>
+      expect(deletedId).toBe('11111111-1111-1111-1111-111111111111'),
+    )
+  })
 })

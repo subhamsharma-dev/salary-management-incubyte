@@ -1,6 +1,17 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -18,8 +29,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { type Employee } from '@/lib/api'
 
-import { useEmployees } from '../queries'
+import { useDeleteEmployee, useEmployees } from '../queries'
 import { buildSearch } from '../searchSchema'
 
 const COUNTRIES = ['US', 'GB', 'IN', 'DE', 'FR', 'JP', 'BR', 'AU', 'CA', 'MX']
@@ -45,7 +57,9 @@ export function EmployeeListPage() {
   const { page, q, country, department } = useSearch({ from: '/employees' })
   const navigate = useNavigate()
   const [searchText, setSearchText] = useState(q ?? '')
+  const [deleteCandidate, setDeleteCandidate] = useState<Employee | null>(null)
   const { data, isPending, isError } = useEmployees({ page, q, country, department })
+  const deleteMutation = useDeleteEmployee()
 
   useEffect(() => {
     if (searchText === (q ?? '')) return
@@ -125,6 +139,7 @@ export function EmployeeListPage() {
             <TableHead>Job title</TableHead>
             <TableHead>Department</TableHead>
             <TableHead>Country</TableHead>
+            <TableHead aria-label="Actions" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -135,6 +150,16 @@ export function EmployeeListPage() {
               <TableCell>{employee.job_title}</TableCell>
               <TableCell>{employee.department}</TableCell>
               <TableCell>{employee.country}</TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Delete ${employee.full_name}`}
+                  onClick={() => setDeleteCandidate(employee)}
+                >
+                  <Trash2 />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -149,6 +174,35 @@ export function EmployeeListPage() {
       >
         Next
       </Button>
+      <AlertDialog
+        open={deleteCandidate !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCandidate(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this employee?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteCandidate ? `${deleteCandidate.full_name} will be removed.` : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteCandidate) {
+                  deleteMutation.mutate(deleteCandidate.id)
+                  setDeleteCandidate(null)
+                }
+              }}
+            >
+              Confirm delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
