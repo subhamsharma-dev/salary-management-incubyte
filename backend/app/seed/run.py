@@ -13,7 +13,7 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import insert
+from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session, sessionmaker
 
 import app.repositories.orm  # noqa: F401  -- register EmployeeORM on Base.metadata
@@ -30,6 +30,20 @@ def seed(session: Session, count: int = 10_000) -> None:
     rows = _generate_rows(count)
     session.execute(insert(EmployeeORM), rows)
     session.commit()
+
+
+def seed_if_empty(session: Session, count: int = 10_000) -> bool:
+    """Seed iff the employees table is empty.
+
+    Returns True if a seed happened, False if rows already exist. Called at app
+    lifespan start so the deployed app is demo-ready on first cold start without
+    a manual `fly ssh` step.
+    """
+    current = session.scalar(select(func.count()).select_from(EmployeeORM))
+    if current and current > 0:
+        return False
+    seed(session, count)
+    return True
 
 
 def _generate_rows(count: int) -> list[dict[str, Any]]:
