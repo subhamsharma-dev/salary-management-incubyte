@@ -147,4 +147,23 @@ describe('EmployeeListPage', () => {
 
     await waitFor(() => expect(receivedCountry).toBe('GB'))
   })
+
+  it('filters by department selected from the department Select', async () => {
+    let receivedDepartment: string | null = null
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        receivedDepartment = new URL(request.url).searchParams.get('department')
+        return HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 })
+      }),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    const trigger = await screen.findByRole('combobox', { name: /department/i })
+    await userEvent.click(trigger)
+    await userEvent.click(await screen.findByRole('option', { name: 'Engineering' }))
+
+    await waitFor(() => expect(receivedDepartment).toBe('engineering'))
+  })
 })

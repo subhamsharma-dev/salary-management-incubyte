@@ -23,23 +23,40 @@ import { useEmployees } from '../queries'
 import { buildSearch } from '../searchSchema'
 
 const COUNTRIES = ['US', 'GB', 'IN', 'DE', 'FR', 'JP', 'BR', 'AU', 'CA', 'MX']
+const DEPARTMENTS = [
+  'engineering',
+  'sales',
+  'marketing',
+  'human_resources',
+  'finance',
+  'operations',
+  'customer_support',
+  'product',
+]
+
+function humanize(value: string): string {
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
 
 export function EmployeeListPage() {
-  const { page, q, country } = useSearch({ from: '/employees' })
+  const { page, q, country, department } = useSearch({ from: '/employees' })
   const navigate = useNavigate()
   const [searchText, setSearchText] = useState(q ?? '')
-  const { data, isPending, isError } = useEmployees({ page, q, country })
+  const { data, isPending, isError } = useEmployees({ page, q, country, department })
 
   useEffect(() => {
     if (searchText === (q ?? '')) return
     const handle = setTimeout(() => {
       navigate({
         to: '/employees',
-        search: buildSearch({ q: searchText, country }),
+        search: buildSearch({ q: searchText, country, department }),
       })
     }, 300)
     return () => clearTimeout(handle)
-  }, [searchText, q, country, navigate])
+  }, [searchText, q, country, department, navigate])
 
   function selectCountry(value: string) {
     navigate({
@@ -47,6 +64,18 @@ export function EmployeeListPage() {
       search: buildSearch({
         q,
         country: value !== 'all' ? value : undefined,
+        department,
+      }),
+    })
+  }
+
+  function selectDepartment(value: string) {
+    navigate({
+      to: '/employees',
+      search: buildSearch({
+        q,
+        country,
+        department: value !== 'all' ? value : undefined,
       }),
     })
   }
@@ -71,6 +100,19 @@ export function EmployeeListPage() {
           {COUNTRIES.map((code) => (
             <SelectItem key={code} value={code}>
               {code}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={department ?? 'all'} onValueChange={selectDepartment}>
+        <SelectTrigger aria-label="Department">
+          <SelectValue placeholder="Department" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All departments</SelectItem>
+          {DEPARTMENTS.map((d) => (
+            <SelectItem key={d} value={d}>
+              {humanize(d)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -101,7 +143,7 @@ export function EmployeeListPage() {
         onClick={() =>
           navigate({
             to: '/employees',
-            search: buildSearch({ page: page + 1, q, country }),
+            search: buildSearch({ page: page + 1, q, country, department }),
           })
         }
       >
