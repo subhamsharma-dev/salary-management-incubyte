@@ -12,6 +12,7 @@ import { EmployeeEditPage } from './features/employees/edit/EmployeeEditPage'
 import { EmployeeNewPage } from './features/employees/edit/EmployeeNewPage'
 import { EmployeeListPage } from './features/employees/list/EmployeeListPage'
 import { employeesSearchSchema } from './features/employees/searchSchema'
+import { InsightsPage } from './features/insights/InsightsPage'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -54,12 +55,19 @@ const employeeEditRoute = createRoute({
   component: EmployeeEditPage,
 })
 
+const insightsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/insights',
+  component: InsightsPage,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   employeesRoute,
   employeesNewRoute,
   employeeDetailRoute,
   employeeEditRoute,
+  insightsRoute,
 ])
 
 export const router = createRouter({ routeTree })

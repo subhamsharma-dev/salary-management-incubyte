@@ -11,6 +11,7 @@ import { EmployeeEditPage } from '../features/employees/edit/EmployeeEditPage'
 import { EmployeeNewPage } from '../features/employees/edit/EmployeeNewPage'
 import { EmployeeListPage } from '../features/employees/list/EmployeeListPage'
 import { employeesSearchSchema } from '../features/employees/searchSchema'
+import { InsightsPage } from '../features/insights/InsightsPage'
 
 export function createTestRouter(initialEntries: string[]) {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -40,12 +41,19 @@ export function createTestRouter(initialEntries: string[]) {
     component: EmployeeEditPage,
   })
 
+  const insightsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/insights',
+    component: InsightsPage,
+  })
+
   return createRouter({
     routeTree: rootRoute.addChildren([
       employeesRoute,
       employeesNewRoute,
       employeeDetailRoute,
       employeeEditRoute,
+      insightsRoute,
     ]),
     history: createMemoryHistory({ initialEntries }),
   })
