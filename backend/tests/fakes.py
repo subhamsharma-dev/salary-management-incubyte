@@ -8,7 +8,7 @@ from app.db.engine import _percentile
 from app.domain.department import Department
 from app.domain.employee import Employee
 from app.domain.salary import Salary
-from app.repositories.protocol import CountryInsight, Page
+from app.repositories.protocol import CountryInsight, CountryJobTitleInsight, Page
 
 
 class InMemoryEmployeeRepository:
@@ -102,3 +102,21 @@ class InMemoryEmployeeRepository:
                 )
             )
         return insights
+
+    def aggregate_by_country_job_title(self) -> list[CountryJobTitleInsight]:
+        by_pair: dict[tuple[str, str], list[int]] = defaultdict(list)
+        for employee in self._store.values():
+            if employee.is_deleted:
+                continue
+            key = (employee.country.code, employee.job_title)
+            by_pair[key].append(employee.salary.cents)
+
+        return [
+            CountryJobTitleInsight(
+                country=country,
+                job_title=job_title,
+                headcount=len(salaries),
+                avg_salary=Salary(cents=int(round(sum(salaries) / len(salaries)))),
+            )
+            for (country, job_title), salaries in sorted(by_pair.items())
+        ]

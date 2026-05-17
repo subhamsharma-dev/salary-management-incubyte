@@ -13,7 +13,7 @@ from app.domain.employee import Employee
 from app.domain.employment_type import EmploymentType
 from app.domain.salary import Salary
 from app.repositories.orm import EmployeeORM
-from app.repositories.protocol import CountryInsight, Page
+from app.repositories.protocol import CountryInsight, CountryJobTitleInsight, Page
 
 
 class SqlAlchemyEmployeeRepository:
@@ -95,6 +95,29 @@ class SqlAlchemyEmployeeRepository:
                 median_salary=Salary(cents=int(round(row.p50_cents))),
                 p25_salary=Salary(cents=int(round(row.p25_cents))),
                 p75_salary=Salary(cents=int(round(row.p75_cents))),
+            )
+            for row in rows
+        ]
+
+    def aggregate_by_country_job_title(self) -> list[CountryJobTitleInsight]:
+        rows = self._session.execute(
+            select(
+                EmployeeORM.country,
+                EmployeeORM.job_title,
+                func.count().label("headcount"),
+                func.avg(EmployeeORM.salary_cents).label("avg_cents"),
+            )
+            .where(EmployeeORM.is_deleted == False)  # noqa: E712
+            .group_by(EmployeeORM.country, EmployeeORM.job_title)
+            .order_by(EmployeeORM.country, EmployeeORM.job_title)
+        ).all()
+
+        return [
+            CountryJobTitleInsight(
+                country=row.country,
+                job_title=row.job_title,
+                headcount=row.headcount,
+                avg_salary=Salary(cents=int(round(row.avg_cents))),
             )
             for row in rows
         ]

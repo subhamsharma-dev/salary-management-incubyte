@@ -32,6 +32,15 @@ class CountryInsight(BaseModel):
     p75_salary: Salary
 
 
+class CountryJobTitleInsight(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    country: str
+    job_title: str
+    headcount: int
+    avg_salary: Salary
+
+
 class EmployeeRepository(Protocol):
     def add(self, employee: Employee) -> None: ...
 
@@ -54,3 +63,5 @@ class EmployeeRepository(Protocol):
     def update(self, employee: Employee) -> None: ...
 
     def aggregate_by_country(self) -> list[CountryInsight]: ...
+
+    def aggregate_by_country_job_title(self) -> list[CountryJobTitleInsight]: ...
