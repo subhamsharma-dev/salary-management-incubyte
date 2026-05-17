@@ -128,4 +128,23 @@ describe('EmployeeListPage', () => {
 
     await waitFor(() => expect(receivedQ).toBe('ada'), { timeout: 1000 })
   })
+
+  it('filters by country selected from the country Select', async () => {
+    let receivedCountry: string | null = null
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        receivedCountry = new URL(request.url).searchParams.get('country')
+        return HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 })
+      }),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    const trigger = await screen.findByRole('combobox', { name: /country/i })
+    await userEvent.click(trigger)
+    await userEvent.click(await screen.findByRole('option', { name: 'GB' }))
+
+    await waitFor(() => expect(receivedCountry).toBe('GB'))
+  })
 })

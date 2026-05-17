@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,23 +20,36 @@ import {
 } from '@/components/ui/table'
 
 import { useEmployees } from '../queries'
+import { buildSearch } from '../searchSchema'
+
+const COUNTRIES = ['US', 'GB', 'IN', 'DE', 'FR', 'JP', 'BR', 'AU', 'CA', 'MX']
 
 export function EmployeeListPage() {
-  const { page, q } = useSearch({ from: '/employees' })
+  const { page, q, country } = useSearch({ from: '/employees' })
   const navigate = useNavigate()
   const [searchText, setSearchText] = useState(q ?? '')
-  const { data, isPending, isError } = useEmployees({ page, q })
+  const { data, isPending, isError } = useEmployees({ page, q, country })
 
   useEffect(() => {
     if (searchText === (q ?? '')) return
     const handle = setTimeout(() => {
       navigate({
         to: '/employees',
-        search: { page: 1, ...(searchText ? { q: searchText } : {}) },
+        search: buildSearch({ q: searchText, country }),
       })
     }, 300)
     return () => clearTimeout(handle)
-  }, [searchText, q, navigate])
+  }, [searchText, q, country, navigate])
+
+  function selectCountry(value: string) {
+    navigate({
+      to: '/employees',
+      search: buildSearch({
+        q,
+        country: value !== 'all' ? value : undefined,
+      }),
+    })
+  }
 
   if (isPending) return <p>Loading…</p>
   if (isError) return <p>Failed to load employees.</p>
@@ -42,6 +62,19 @@ export function EmployeeListPage() {
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
       />
+      <Select value={country ?? 'all'} onValueChange={selectCountry}>
+        <SelectTrigger aria-label="Country">
+          <SelectValue placeholder="Country" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All countries</SelectItem>
+          {COUNTRIES.map((code) => (
+            <SelectItem key={code} value={code}>
+              {code}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <Table>
         <TableHeader>
           <TableRow>
@@ -68,7 +101,7 @@ export function EmployeeListPage() {
         onClick={() =>
           navigate({
             to: '/employees',
-            search: { page: page + 1, ...(q !== undefined ? { q } : {}) },
+            search: buildSearch({ page: page + 1, q, country }),
           })
         }
       >
