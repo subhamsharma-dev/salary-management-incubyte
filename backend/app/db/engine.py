@@ -11,6 +11,7 @@ from typing import Any
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import StaticPool
 
 
 def _percentile(values: list[float], p: float) -> float | None:
@@ -43,7 +44,19 @@ def _make_percentile_aggregate(p: float) -> type:
 
 
 def create_engine_for_url(url: str, **kwargs: Any) -> Engine:
-    """Create a SQLAlchemy Engine with `p25`/`p50`/`p75` SQLite aggregates registered."""
+    """Create a SQLAlchemy Engine with `p25`/`p50`/`p75` SQLite aggregates registered.
+
+    For SQLite URLs, sets `check_same_thread=False` so FastAPI's threaded request
+    handlers can share a single connection pool (SQLite's default rejects cross-thread
+    use). For our single-writer HR-tool workload this is safe.
+    """
+    if url.startswith("sqlite"):
+        if "connect_args" not in kwargs:
+            kwargs["connect_args"] = {"check_same_thread": False}
+        # `:memory:` databases are per-connection; pin to a single connection
+        # so all sessions on this engine see the same in-memory DB.
+        if ":memory:" in url and "poolclass" not in kwargs:
+            kwargs["poolclass"] = StaticPool
     engine = create_engine(url, **kwargs)
 
     @event.listens_for(engine, "connect")
