@@ -359,6 +359,28 @@ The harness blocked several actions Claude would have refused anyway:
   - Detail page uses `<dl>` for label-value pairs instead of a card grid of `<p>` — semantically right; CSS grid styles it visually.
   - Single shared `EmployeeForm` for create + edit, mode-detected via presence of `defaultValues` — avoids two near-identical form components.
 
+### Frontend insights page (Recharts)
+- Commits: c8d7694..3ef9041 (5 commits: api → hooks → page+route → tooltip-type fix → list-page nav button).
+- Approaches proposed: n/a — handoff was explicit ("Two Recharts charts: by-country, by-country-job-title").
+- Sub-choices: BarChart with 6 series (min/p25/median/avg/p75/max) per country for chart 1 — Recharts has no native box plot; grouped bars are the pragmatic fit. Horizontal BarChart with top-15 limit for chart 2 — flattens (country, job_title) onto one axis and avoids 200-bar mess. Cents converted to dollars at the page boundary for tick formatting; `formatCurrency` (extracted in cycle 5) handles tooltip display. Inline-styled fixed-height container wraps each ResponsiveContainer — jsdom-friendly, prevents collapse-to-zero.
+- Most useful prompt or moment: _TODO_
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed:
+  - Verified `CountryInsightResponse` / `CountryJobTitleInsightResponse` schemas in `schemas/insights.py` before writing the api types — 8 cents fields on the country side, 4 on the job-title side.
+  - Recharts `Tooltip` `formatter` prop has a broader signature than `(value: number) => string` — TS complained because `ValueType` is `number | string | undefined`. Build broke after cycle 6.3 lander; fixed via `Number(value) * 100` coercion in a follow-up fix commit. Tests didn't catch this (vitest uses esbuild and skips types) — surfaced at `npm run build`.
+  - Test-pool parallelism issue: when Recharts and EmployeeForm-userEvent.type tests ran concurrently, the form tests hit the 5s default `testTimeout`. Bumped `testTimeout` to 15s in `vite.config.ts` — masks the resource contention but is the right knob for "userEvent.type takes longer when the parallel pool is loaded."
+  - Bundle bloat: Recharts adds substantial weight (final prod JS chunk: ~845 kB / 255 kB gzipped). Vite emitted a chunk-size-limit warning (informational). Code-splitting via dynamic `import('./InsightsPage')` is a future option if needed; v1 is fine.
+  - Top-N truncation for chart 2 — without it, ~10 countries × ~20 job titles = 200 bars on a single chart, unreadable. Sorted by `avg_salary_cents` descending, sliced to 15.
+  - cents-to-dollars math centralized at one place (`centsToDollars()` inside the page) — keeps the tick formatter, tooltip, and `formatCurrency` aligned (all expect cents at the boundary).
+  - Recharts heavy components (`ResponsiveContainer`) need a height-bearing parent in jsdom; an explicit `style={{ width: '100%', height: 400 }}` wrapper div prevents the container collapsing to 0×0.
+- TDD discipline overrides:
+  - Cycles 6.2 and 6.3 bundled into one commit — placeholder routes would have referenced a non-existent `InsightsPage` import, so the route registration and the page implementation had to land together.
+  - **Rule 4 speedrun** continued from cycle 5 (developer pre-authorized fast-forward; auto-commit; log only at cycle end). Mid-cycle test-pool failure + Tooltip-type build break both surfaced naturally and were fixed inline; the fixes shipped as `fix(...)` follow-ups rather than amended commits.
+- Notable Rule 5 callouts:
+  - BarChart over a hand-rolled box-plot SVG — Rule 5 against premature complexity; the assignment is "show distribution," not "implement charting library." Grouped bars convey the same six percentile/extreme values.
+  - Horizontal layout for chart 2 with `width={200}` on the YAxis — long category labels need horizontal room; flipping the axes is the standard fix.
+  - `testTimeout: 15000` instead of switching vitest pool to `singleFork: true` — preserves parallel speed for the majority of tests, only forgiving the userEvent.type-under-load case.
+
 ---
 
 ## Closing notes
