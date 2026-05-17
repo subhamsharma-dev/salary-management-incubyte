@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.engine import create_engine_for_url
 from app.repositories.orm import EmployeeORM
-from app.seed.run import main, seed
+from app.seed.run import main, seed, seed_if_empty
 
 
 def test_seed_inserts_count_rows_reconstructible_as_employees(session, employee_repository):
@@ -28,3 +28,21 @@ def test_seed_main_count_and_reset(tmp_path, monkeypatch):
     engine.dispose()
 
     assert total == 10  # not 30 — --reset dropped the first 20
+
+
+def test_seed_if_empty_seeds_when_no_rows(session):
+    seeded = seed_if_empty(session, count=5)
+
+    total = session.scalar(select(func.count()).select_from(EmployeeORM))
+    assert seeded is True
+    assert total == 5
+
+
+def test_seed_if_empty_no_op_when_rows_exist(session):
+    seed(session, count=3)
+
+    seeded = seed_if_empty(session, count=100)
+
+    total = session.scalar(select(func.count()).select_from(EmployeeORM))
+    assert seeded is False
+    assert total == 3
