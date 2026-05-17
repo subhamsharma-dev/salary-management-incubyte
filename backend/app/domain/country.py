@@ -1,6 +1,7 @@
 import json
-from dataclasses import dataclass
 from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 _VALID_CODES: frozenset[str] = frozenset(
@@ -10,10 +11,14 @@ _VALID_CODES: frozenset[str] = frozenset(
 )
 
 
-@dataclass(frozen=True)
-class Country:
+class Country(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     code: str
 
-    def __post_init__(self) -> None:
-        if self.code not in _VALID_CODES:
+    @field_validator("code")
+    @classmethod
+    def _must_be_known_alpha_2(cls, value: str) -> str:
+        if value not in _VALID_CODES:
             raise ValueError("Unknown ISO-3166 alpha-2 code")
+        return value
