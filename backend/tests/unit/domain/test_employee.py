@@ -1,4 +1,5 @@
-from datetime import date
+import uuid
+from datetime import date, datetime, timezone
 
 from app.domain.country import Country
 from app.domain.department import Department
@@ -24,3 +25,25 @@ def test_employee_stores_provided_fields():
     assert employee.email.address == "jane@example.com"
     assert employee.salary.cents == 12_000_000
     assert employee.hire_date == date(2020, 1, 15)
+
+
+def test_employee_sets_sensible_defaults_for_server_fields():
+    before = datetime.now(timezone.utc)
+
+    employee = Employee(
+        full_name="Jane Doe",
+        email=Email(address="jane@example.com"),
+        job_title="Senior Engineer",
+        department=Department.ENGINEERING,
+        country=Country(code="US"),
+        salary=Salary(cents=12_000_000),
+        employment_type=EmploymentType.FULL_TIME,
+        hire_date=date(2020, 1, 15),
+    )
+
+    after = datetime.now(timezone.utc)
+
+    assert isinstance(employee.id, uuid.UUID)
+    assert employee.is_deleted is False
+    assert before <= employee.created_at <= after
+    assert before <= employee.updated_at <= after
