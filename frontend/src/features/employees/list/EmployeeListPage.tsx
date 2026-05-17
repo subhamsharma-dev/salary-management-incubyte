@@ -194,7 +194,13 @@ export function EmployeeListPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate({ to: '/insights' })}
+          >
+            Insights
+          </Button>
           <Button onClick={() => navigate({ to: '/employees/new' })}>
             Add employee
           </Button>

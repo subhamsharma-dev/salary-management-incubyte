@@ -309,6 +309,23 @@ describe('EmployeeListPage', () => {
     await waitFor(() => expect(receivedPages).toContain('1'))
   })
 
+  it('Insights button navigates to insights page', async () => {
+    server.use(
+      http.get('*/employees', () =>
+        HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 }),
+      ),
+      http.get('*/insights/by-country', () => HttpResponse.json([])),
+      http.get('*/insights/by-country-job-title', () => HttpResponse.json([])),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await screen.findByRole('button', { name: /^insights$/i })
+    await userEvent.click(screen.getByRole('button', { name: /^insights$/i }))
+    await screen.findByText('Salary insights')
+  })
+
   it('Add employee button navigates to new employee page', async () => {
     server.use(
       http.get('*/employees', () =>
