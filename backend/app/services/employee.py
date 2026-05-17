@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Any
 from uuid import UUID
 
@@ -31,6 +31,19 @@ class CreateEmployeeInput(BaseModel):
     salary_cents: int
     employment_type: EmploymentType
     hire_date: date
+
+
+class UpdateEmployeeInput(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    full_name: str | None = None
+    email: str | None = None
+    job_title: str | None = None
+    department: Department | None = None
+    country: str | None = None
+    salary_cents: int | None = None
+    employment_type: EmploymentType | None = None
+    hire_date: date | None = None
 
 
 class EmployeeService:
@@ -65,3 +78,31 @@ class EmployeeService:
 
     def avg_by_country_job_title(self) -> list[CountryJobTitleInsight]:
         return self._repo.aggregate_by_country_job_title()
+
+    def update_employee(self, employee_id: UUID, data: UpdateEmployeeInput) -> Employee:
+        current = self._repo.get(employee_id)
+        if current is None:
+            raise ValueError(f"Employee {employee_id} not found")
+
+        updates: dict[str, Any] = {}
+        if data.full_name is not None:
+            updates["full_name"] = data.full_name
+        if data.email is not None:
+            updates["email"] = Email(address=data.email)
+        if data.job_title is not None:
+            updates["job_title"] = data.job_title
+        if data.department is not None:
+            updates["department"] = data.department
+        if data.country is not None:
+            updates["country"] = Country(code=data.country)
+        if data.salary_cents is not None:
+            updates["salary"] = Salary(cents=data.salary_cents)
+        if data.employment_type is not None:
+            updates["employment_type"] = data.employment_type
+        if data.hire_date is not None:
+            updates["hire_date"] = data.hire_date
+        updates["updated_at"] = datetime.now(UTC)
+
+        updated = current.model_copy(update=updates)
+        self._repo.update(updated)
+        return updated
