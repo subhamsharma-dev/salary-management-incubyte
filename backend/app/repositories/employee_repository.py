@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.domain.country import Country
@@ -51,6 +51,7 @@ class SqlAlchemyEmployeeRepository:
         job_title: str | None = None,
         department: Department | None = None,
         include_deleted: bool = False,
+        q: str | None = None,
     ) -> Page:
         filters = []
         if country is not None:
@@ -61,6 +62,15 @@ class SqlAlchemyEmployeeRepository:
             filters.append(EmployeeORM.department == department.value)
         if not include_deleted:
             filters.append(EmployeeORM.is_deleted == False)  # noqa: E712
+        if q is not None:
+            pattern = f"%{q.lower()}%"
+            filters.append(
+                or_(
+                    func.lower(EmployeeORM.full_name).like(pattern),
+                    func.lower(EmployeeORM.email).like(pattern),
+                    func.lower(EmployeeORM.job_title).like(pattern),
+                )
+            )
 
         offset = (page - 1) * page_size
 

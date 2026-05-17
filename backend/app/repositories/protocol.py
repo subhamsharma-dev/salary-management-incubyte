@@ -30,4 +30,5 @@ class EmployeeRepository(Protocol):
         job_title: str | None = None,
         department: Department | None = None,
         include_deleted: bool = False,
+        q: str | None = None,
     ) -> Page: ...
