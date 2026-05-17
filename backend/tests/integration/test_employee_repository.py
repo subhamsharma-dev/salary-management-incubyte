@@ -29,3 +29,15 @@ def test_employee_repository_round_trips_an_employee(employee_repository):
     fetched = employee_repository.get(original.id)
 
     assert fetched == original
+
+
+def test_repository_lists_all_added_employees(employee_repository):
+    e1 = Employee(**_valid_employee_kwargs(email=Email(address="a@example.com")))
+    e2 = Employee(**_valid_employee_kwargs(email=Email(address="b@example.com")))
+
+    employee_repository.add(e1)
+    employee_repository.add(e2)
+
+    employees = employee_repository.list()
+
+    assert {e.email.address for e in employees} == {"a@example.com", "b@example.com"}
