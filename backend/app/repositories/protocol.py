@@ -29,4 +29,5 @@ class EmployeeRepository(Protocol):
         country: str | None = None,
         job_title: str | None = None,
         department: Department | None = None,
+        include_deleted: bool = False,
     ) -> Page: ...

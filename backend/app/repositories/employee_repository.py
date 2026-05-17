@@ -50,6 +50,7 @@ class SqlAlchemyEmployeeRepository:
         country: str | None = None,
         job_title: str | None = None,
         department: Department | None = None,
+        include_deleted: bool = False,
     ) -> Page:
         filters = []
         if country is not None:
@@ -58,6 +59,8 @@ class SqlAlchemyEmployeeRepository:
             filters.append(EmployeeORM.job_title == job_title)
         if department is not None:
             filters.append(EmployeeORM.department == department.value)
+        if not include_deleted:
+            filters.append(EmployeeORM.is_deleted == False)  # noqa: E712
 
         offset = (page - 1) * page_size
 
