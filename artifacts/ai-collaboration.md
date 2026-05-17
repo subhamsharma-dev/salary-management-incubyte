@@ -381,9 +381,56 @@ The harness blocked several actions Claude would have refused anyway:
   - Horizontal layout for chart 2 with `width={200}` on the YAxis — long category labels need horizontal room; flipping the axes is the standard fix.
   - `testTimeout: 15000` instead of switching vitest pool to `singleFork: true` — preserves parallel speed for the majority of tests, only forgiving the userEvent.type-under-load case.
 
+### Frontend deployment closeout (Vercel)
+- Commits: this entry + `vercel.json` + README updates.
+- Approaches proposed: n/a — handoff was explicit ("frontend on Vercel").
+- Sub-choices: `vercel.json` with `rewrites: [{ source: "/(.*)", destination: "/index.html" }]` — the standard Vite SPA pattern; without it, direct navigation to `/employees/$id` or refresh on a sub-route 404s on Vercel's edge. Vercel auto-detects Vite (no `buildCommand` / `outputDirectory` override needed). `VITE_API_BASE_URL` left as a defaulted runtime fallback to the Fly.io URL — no Vercel env var needed unless someone wants to point production at a different backend.
+- Most useful prompt or moment: _TODO_
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed:
+  - SPA rewrites — Vite's dev server fakes client-side routing seamlessly; Vercel's static hosting doesn't, so `/employees/abc` would 404 without an explicit catch-all rewrite to `index.html`. Standard gotcha for first-time SPA deploys.
+  - README "Live → App URL" still needs a real Vercel URL after the first `vercel --prod`. Marked TBD with a clear "fill in after first deploy" note.
+  - Repo section described the frontend stack as `(TBD)` from the very first commit — updated now that everything is real.
+  - CORS allow-origin `["*"]` is the right choice here precisely because the frontend is on a different origin (Vercel) from the backend (Fly.io). Without the cycle-4 CORS detour this would have broken at first Vercel deploy.
+
 ---
 
 ## Closing notes
 
-(Fill in at the end of the build: 3–5 honest observations about pairing with Claude on this
-project — what worked, what didn't, what I'd change.)
+Honest observations about pairing with Claude on this project. Draft — edit, trim, or extend.
+
+1. **TDD discipline survived the build.** Three Laws held end-to-end on the backend (test-first
+   on every domain / service / repository / api commit). The frontend bent the rules at
+   §12 escape-hatch boundaries (routing setup, shadcn primitives, layout polish) — always
+   logged. The Rule 4 "Never silently skip" clause was tested at least three times across
+   the build (cycle 2.2 "skip waiting without logging," cycle 5 "speedrun, no logs") and
+   held both times — overrides went through a one-line ai-collab entry each.
+
+2. **Eye-testing caught what unit tests couldn't.** Two real bugs shipped past green unit
+   tests and were caught by a manual browser check: (a) CORS missing on the deployed
+   backend (tests hit the in-process FastAPI app, never the deployed one); (b) the
+   flicker where every keystroke unmounted the entire UI to `<p>Loading…</p>` (tests
+   assert final state, not transitional UX). Lesson: green tests are a necessary but
+   insufficient gate. The `placeholderData: keepPreviousData` fix and the backend CORS
+   middleware were both forced by user-facing reality, not by red tests.
+
+3. **The propose-wait gates produced better designs than the speedrun mode produced.**
+   Cycles 2–4 were paced and the surfaced design choices (URL-vs-state, schema shape,
+   how to test Radix Select) showed up in the conversation log and got real consideration.
+   Cycles 5–6 ran in fast-forward and shipped working code, but the mid-cycle test bugs
+   (humanize Title-Case mismatch, stale "Edit stub" assertion, Recharts Tooltip type)
+   surfaced as fix-in-place rather than as design discussions. Both modes work; they
+   trade discussion depth for speed.
+
+4. **The trade-off doc + the design pivots section justified the messy moments.** The
+   mid-build Pydantic pivot, the cents-vs-decimal money decision, the percentile aggregate
+   strategy, the buildSearch helper extraction — each got 3–5 lines in `trade-offs.md` /
+   `ai-collaboration.md` rather than being silently absorbed. Six months later, those
+   notes will explain commits that otherwise look arbitrary.
+
+5. **What I'd change next time.** Set up the frontend test infrastructure (jsdom polyfills,
+   MSW lifecycle, test router helper) as cycle-zero infrastructure before any feature
+   cycle — instead of growing it incrementally across cycles 3, 4.5, 5.4. The
+   `createTestRouter` helper file got rewritten three times as new routes landed. Bundling
+   that into a one-time setup would have saved ~3 small commits and avoided the
+   stale-stub-assertion class of mid-cycle bug.
