@@ -112,7 +112,7 @@ drift between specs and code misleads reviewers more than absence would.
 | Database     | SQLite (`app.db`). Alembic deferred — lifespan runs `Base.metadata.create_all` until schema migrations are needed. |
 | Backend tests| pytest · httpx (TestClient) |
 | Lint / type  | ruff · mypy (strict on `app/domain`, lax elsewhere) |
-| Frontend     | Vite · React 18 · TypeScript |
+| Frontend     | Vite · React 19 · TypeScript (Node 20+; built on Node 24) |
 | UI           | shadcn/ui · Tailwind |
 | Data         | TanStack Query · TanStack Table |
 | Frontend tests| Vitest · React Testing Library |
