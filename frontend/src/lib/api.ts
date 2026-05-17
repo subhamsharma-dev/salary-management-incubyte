@@ -103,3 +103,37 @@ export async function updateEmployee(
   }
   return (await response.json()) as Employee
 }
+
+export interface CountryInsight {
+  country: string
+  headcount: number
+  min_salary_cents: number
+  max_salary_cents: number
+  avg_salary_cents: number
+  median_salary_cents: number
+  p25_salary_cents: number
+  p75_salary_cents: number
+}
+
+export interface CountryJobTitleInsight {
+  country: string
+  job_title: string
+  headcount: number
+  avg_salary_cents: number
+}
+
+export async function getInsightsByCountry(): Promise<CountryInsight[]> {
+  const response = await fetch(`${BASE_URL}/insights/by-country`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch insights by country: ${response.status}`)
+  }
+  return (await response.json()) as CountryInsight[]
+}
+
+export async function getInsightsByCountryJobTitle(): Promise<CountryJobTitleInsight[]> {
+  const response = await fetch(`${BASE_URL}/insights/by-country-job-title`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch insights by country/job-title: ${response.status}`)
+  }
+  return (await response.json()) as CountryJobTitleInsight[]
+}

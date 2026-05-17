@@ -5,6 +5,8 @@ import {
   createEmployee,
   deleteEmployee,
   getEmployee,
+  getInsightsByCountry,
+  getInsightsByCountryJobTitle,
   listEmployees,
   updateEmployee,
 } from './api'
@@ -150,6 +152,52 @@ describe('listEmployees', () => {
 
     expect(created.id).toBe('22222222-2222-2222-2222-222222222222')
     expect((capturedBody as { email: string }).email).toBe('new@example.com')
+  })
+
+  it('fetches insights by country', async () => {
+    server.use(
+      http.get('*/insights/by-country', () =>
+        HttpResponse.json([
+          {
+            country: 'US',
+            headcount: 1000,
+            min_salary_cents: 5_000_000,
+            max_salary_cents: 30_000_000,
+            avg_salary_cents: 12_000_000,
+            median_salary_cents: 11_000_000,
+            p25_salary_cents: 9_000_000,
+            p75_salary_cents: 15_000_000,
+          },
+        ]),
+      ),
+    )
+
+    const insights = await getInsightsByCountry()
+
+    expect(insights).toHaveLength(1)
+    expect(insights[0].country).toBe('US')
+    expect(insights[0].median_salary_cents).toBe(11_000_000)
+  })
+
+  it('fetches insights by country and job title', async () => {
+    server.use(
+      http.get('*/insights/by-country-job-title', () =>
+        HttpResponse.json([
+          {
+            country: 'US',
+            job_title: 'Engineer',
+            headcount: 50,
+            avg_salary_cents: 13_000_000,
+          },
+        ]),
+      ),
+    )
+
+    const insights = await getInsightsByCountryJobTitle()
+
+    expect(insights).toHaveLength(1)
+    expect(insights[0].job_title).toBe('Engineer')
+    expect(insights[0].avg_salary_cents).toBe(13_000_000)
   })
 
   it('updates an employee with PATCH payload', async () => {
