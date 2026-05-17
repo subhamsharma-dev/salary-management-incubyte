@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 import app.repositories.orm  # noqa: F401  -- register EmployeeORM on Base.metadata
 from app.api.employees import router as employees_router
+from app.api.insights import router as insights_router
 from app.db.base import Base
 from app.db.engine import create_engine_for_url
 
@@ -29,6 +30,7 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Salary Management API", lifespan=lifespan)
 app.include_router(employees_router)
+app.include_router(insights_router)
 
 
 @app.get("/health")
