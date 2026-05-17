@@ -168,6 +168,113 @@ describe('EmployeeListPage', () => {
     await waitFor(() => expect(receivedDepartment).toBe('engineering'))
   })
 
+  it('disables Next button when current page is the last page', async () => {
+    server.use(
+      http.get('*/employees', () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: '11111111-1111-1111-1111-111111111111',
+              full_name: 'Sole Employee',
+              email: 'sole@example.com',
+              job_title: 'Engineer',
+              department: 'engineering',
+              country: 'GB',
+              salary_cents: 0,
+              employment_type: 'full_time',
+              hire_date: '2024-01-01',
+              is_deleted: false,
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+            },
+          ],
+          total: 50,
+          page: 1,
+          page_size: 50,
+        }),
+      ),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await screen.findByText('Sole Employee')
+    expect(screen.getByRole('button', { name: /next/i })).toBeDisabled()
+  })
+
+  it('renders Previous button disabled on page 1', async () => {
+    server.use(
+      http.get('*/employees', () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: '11111111-1111-1111-1111-111111111111',
+              full_name: 'Sole Employee',
+              email: 'sole@example.com',
+              job_title: 'Engineer',
+              department: 'engineering',
+              country: 'GB',
+              salary_cents: 0,
+              employment_type: 'full_time',
+              hire_date: '2024-01-01',
+              is_deleted: false,
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+            },
+          ],
+          total: 100,
+          page: 1,
+          page_size: 50,
+        }),
+      ),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await screen.findByText('Sole Employee')
+    expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled()
+  })
+
+  it('redirects to last page when URL page exceeds total', async () => {
+    const receivedPages: string[] = []
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        const p = new URL(request.url).searchParams.get('page') ?? '1'
+        receivedPages.push(p)
+        return HttpResponse.json({
+          items:
+            p === '1'
+              ? [
+                  {
+                    id: '11111111-1111-1111-1111-111111111111',
+                    full_name: 'Sole Employee',
+                    email: 'sole@example.com',
+                    job_title: 'Engineer',
+                    department: 'engineering',
+                    country: 'GB',
+                    salary_cents: 0,
+                    employment_type: 'full_time',
+                    hire_date: '2024-01-01',
+                    is_deleted: false,
+                    created_at: '2024-01-01T00:00:00Z',
+                    updated_at: '2024-01-01T00:00:00Z',
+                  },
+                ]
+              : [],
+          total: 50,
+          page: Number(p),
+          page_size: 50,
+        })
+      }),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=6'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await waitFor(() => expect(receivedPages).toContain('1'))
+  })
+
   it('shows confirmation dialog and deletes employee on confirm', async () => {
     let deletedId: string | null = null
     const employee = {

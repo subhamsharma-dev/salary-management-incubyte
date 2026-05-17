@@ -73,6 +73,17 @@ export function EmployeeListPage() {
     return () => clearTimeout(handle)
   }, [searchText, q, country, department, navigate])
 
+  useEffect(() => {
+    if (!data) return
+    const lastPage = Math.max(1, Math.ceil(data.total / data.page_size))
+    if (page > lastPage) {
+      navigate({
+        to: '/employees',
+        search: buildSearch({ page: lastPage, q, country, department }),
+      })
+    }
+  }, [page, data, navigate, q, country, department])
+
   function selectCountry(value: string) {
     navigate({
       to: '/employees',
@@ -97,6 +108,8 @@ export function EmployeeListPage() {
 
   if (isPending) return <p>Loading…</p>
   if (isError) return <p>Failed to load employees.</p>
+
+  const lastPage = Math.max(1, Math.ceil(data.total / data.page_size))
 
   return (
     <>
@@ -170,16 +183,30 @@ export function EmployeeListPage() {
           </TableBody>
         </Table>
       </Card>
-      <Button
-        onClick={() =>
-          navigate({
-            to: '/employees',
-            search: buildSearch({ page: page + 1, q, country, department }),
-          })
-        }
-      >
-        Next
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          disabled={page <= 1}
+          onClick={() =>
+            navigate({
+              to: '/employees',
+              search: buildSearch({ page: page - 1, q, country, department }),
+            })
+          }
+        >
+          Previous
+        </Button>
+        <Button
+          disabled={page >= lastPage}
+          onClick={() =>
+            navigate({
+              to: '/employees',
+              search: buildSearch({ page: page + 1, q, country, department }),
+            })
+          }
+        >
+          Next
+        </Button>
+      </div>
       <AlertDialog
         open={deleteCandidate !== null}
         onOpenChange={(open) => {
