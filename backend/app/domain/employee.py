@@ -18,7 +18,7 @@ class Employee(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    full_name: str
+    full_name: str = Field(min_length=1, max_length=200)
     email: Email
     job_title: str
     department: Department
