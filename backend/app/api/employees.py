@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.dependencies import get_employee_service
 from app.domain.department import Department
 from app.schemas.employee import EmployeePageResponse, EmployeeResponse
-from app.services.employee import CreateEmployeeInput, EmployeeService
+from app.services.employee import CreateEmployeeInput, EmployeeService, UpdateEmployeeInput
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -54,4 +54,19 @@ def get_employee(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Employee not found",
         )
+    return EmployeeResponse.from_domain(employee)
+
+
+@router.patch("/{employee_id}", response_model=EmployeeResponse)
+def update_employee(
+    employee_id: UUID,
+    data: UpdateEmployeeInput,
+    service: Annotated[EmployeeService, Depends(get_employee_service)],
+) -> EmployeeResponse:
+    if service.get_employee(employee_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Employee not found",
+        )
+    employee = service.update_employee(employee_id, data)
     return EmployeeResponse.from_domain(employee)
