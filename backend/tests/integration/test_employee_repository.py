@@ -201,3 +201,19 @@ def test_repository_aggregates_basic_stats_by_country(employee_repository):
     assert us.min_salary.cents == 100
     assert us.max_salary.cents == 500
     assert us.avg_salary.cents == 300
+
+
+def test_repository_aggregates_percentiles_by_country(employee_repository):
+    for i, cents in enumerate([100, 200, 300, 400, 500]):
+        employee_repository.add(Employee(**_valid_employee_kwargs(
+            email=Email(address=f"u{i}@example.com"),
+            country=Country(code="US"),
+            salary=Salary(cents=cents),
+        )))
+
+    insights = employee_repository.aggregate_by_country()
+
+    us = insights[0]
+    assert us.median_salary.cents == 300
+    assert us.p25_salary.cents == 200
+    assert us.p75_salary.cents == 400
