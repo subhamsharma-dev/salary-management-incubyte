@@ -51,3 +51,9 @@ def test_employee_sets_sensible_defaults_for_server_fields():
 def test_employee_rejects_invalid_full_name(full_name):
     with pytest.raises(ValueError):
         Employee(**_valid_employee_kwargs(full_name=full_name))
+
+
+@pytest.mark.parametrize("job_title", ["", "a" * 101])
+def test_employee_rejects_invalid_job_title(job_title):
+    with pytest.raises(ValueError):
+        Employee(**_valid_employee_kwargs(job_title=job_title))
