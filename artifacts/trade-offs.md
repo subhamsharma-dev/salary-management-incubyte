@@ -97,3 +97,7 @@ Rejected pulling raw `(country, salary_cents)` rows and grouping/computing in Py
 (violates §7's "SQL aggregates, not Python loops") and pure-SQL NTILE/window CTE (verbose
 and gives discrete rather than interpolated values). Cost: a thin Python bridge runs
 per-group inside SQLite. At 10K rows, negligible.
+
+(The `InMemoryEmployeeRepository` test fake aggregates in Python directly — no SQL engine
+to register with — and that's fine because the §7 SQL-aggregates rule applies to the
+SQL-backed repository, not test infrastructure.)

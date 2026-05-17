@@ -108,9 +108,9 @@ drift between specs and code misleads reviewers more than absence would.
 
 | Layer        | Choice |
 |---|---|
-| Backend      | Python 3.12 · FastAPI · Pydantic 2 · SQLAlchemy 2.0 (typed declarative) · Alembic |
-| Database     | SQLite (`app.db`) |
-| Backend tests| pytest · pytest-asyncio · httpx · factory-boy |
+| Backend      | Python 3.12 · FastAPI · Pydantic 2 · SQLAlchemy 2.0 (typed declarative) |
+| Database     | SQLite (`app.db`). Alembic deferred — lifespan runs `Base.metadata.create_all` until schema migrations are needed. |
+| Backend tests| pytest · httpx (TestClient) |
 | Lint / type  | ruff · mypy (strict on `app/domain`, lax elsewhere) |
 | Frontend     | Vite · React 18 · TypeScript |
 | UI           | shadcn/ui · Tailwind |
