@@ -42,6 +42,14 @@ class SqlAlchemyEmployeeRepository:
             return None
         return self._to_domain(row)
 
+    def mark_deleted(self, employee_id: UUID) -> None:
+        row = self._session.get(EmployeeORM, employee_id)
+        if row is None:
+            raise ValueError(f"Employee {employee_id} not found")
+        row.is_deleted = True
+        row.updated_at = datetime.now(UTC)
+        self._session.commit()
+
     def list(
         self,
         *,
