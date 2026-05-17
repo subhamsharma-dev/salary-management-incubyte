@@ -85,6 +85,15 @@ If during the build we choose A over B for a non-obvious reason, append a 3-line
 `artifacts/trade-offs.md`. Only for real trade-offs — not every micro-decision. The
 reviewer's signal comes from a tight, honest list, not an exhaustive one.
 
+### Rule 7 — Log at feature end. Always.
+
+A feature is complete when its `design.md` row is fully behaviour-locked and no follow-up
+cycles are queued. At that point, before starting the next feature's menu, invoke
+`artifacts/prompts.md`'s "Feature end" prompt: propose an entry to
+`artifacts/ai-collaboration.md` using the template at the top of that file, show the
+developer first, commit as `docs: log <feature> in ai-collaboration`. This is a §11 DoD
+gate — don't skip even when the feature feels small.
+
 ---
 
 ## 5. Tech stack (pinned)
@@ -267,7 +276,9 @@ Narrow cases where strict TDD costs more than it pays. Each deviation logged.
 - What we chose not to build → `artifacts/trade-offs.md`
 - System / data model / sequence → `artifacts/architecture.md`
 - Seed script benchmarks → `artifacts/performance.md`
-- Prompts to use with Claude Code → `artifacts/prompts.md`
+- Prompts to invoke at named session moments → `artifacts/prompts.md`. Canonical, not
+  optional — each prompt has a specific moment (session start, feature start, TDD cycle
+  start, after green, before commit, feature end, when unsure).
 - AI collaboration log → `artifacts/ai-collaboration.md`
 - Master prompt that produced this scaffolding → `artifacts/setup-prompt.md`
 
