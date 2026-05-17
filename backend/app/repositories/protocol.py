@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Protocol
 from uuid import UUID
 
@@ -5,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.domain.department import Department
 from app.domain.employee import Employee
+from app.domain.salary import Salary
 
 
 class Page(BaseModel):
@@ -14,6 +17,16 @@ class Page(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class CountryInsight(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    country: str
+    headcount: int
+    min_salary: Salary
+    max_salary: Salary
+    avg_salary: Salary
 
 
 class EmployeeRepository(Protocol):
@@ -36,3 +49,5 @@ class EmployeeRepository(Protocol):
     def mark_deleted(self, employee_id: UUID) -> None: ...
 
     def update(self, employee: Employee) -> None: ...
+
+    def aggregate_by_country(self) -> list[CountryInsight]: ...

@@ -1,9 +1,13 @@
+from __future__ import annotations
+
+from collections import defaultdict
 from datetime import UTC, datetime
 from uuid import UUID
 
 from app.domain.department import Department
 from app.domain.employee import Employee
-from app.repositories.protocol import Page
+from app.domain.salary import Salary
+from app.repositories.protocol import CountryInsight, Page
 
 
 class InMemoryEmployeeRepository:
@@ -73,3 +77,21 @@ class InMemoryEmployeeRepository:
         if employee.id not in self._store:
             raise ValueError(f"Employee {employee.id} not found")
         self._store[employee.id] = employee
+
+    def aggregate_by_country(self) -> list[CountryInsight]:
+        by_country: dict[str, list[int]] = defaultdict(list)
+        for employee in self._store.values():
+            if employee.is_deleted:
+                continue
+            by_country[employee.country.code].append(employee.salary.cents)
+
+        return [
+            CountryInsight(
+                country=country,
+                headcount=len(salaries),
+                min_salary=Salary(cents=min(salaries)),
+                max_salary=Salary(cents=max(salaries)),
+                avg_salary=Salary(cents=int(round(sum(salaries) / len(salaries)))),
+            )
+            for country, salaries in sorted(by_country.items())
+        ]

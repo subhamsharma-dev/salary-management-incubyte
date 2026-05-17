@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -11,7 +13,7 @@ from app.domain.employee import Employee
 from app.domain.employment_type import EmploymentType
 from app.domain.salary import Salary
 from app.repositories.orm import EmployeeORM
-from app.repositories.protocol import Page
+from app.repositories.protocol import CountryInsight, Page
 
 
 class SqlAlchemyEmployeeRepository:
@@ -65,6 +67,31 @@ class SqlAlchemyEmployeeRepository:
         row.is_deleted = employee.is_deleted
         row.updated_at = employee.updated_at
         self._session.commit()
+
+    def aggregate_by_country(self) -> list[CountryInsight]:
+        rows = self._session.execute(
+            select(
+                EmployeeORM.country,
+                func.count().label("headcount"),
+                func.min(EmployeeORM.salary_cents).label("min_cents"),
+                func.max(EmployeeORM.salary_cents).label("max_cents"),
+                func.avg(EmployeeORM.salary_cents).label("avg_cents"),
+            )
+            .where(EmployeeORM.is_deleted == False)  # noqa: E712
+            .group_by(EmployeeORM.country)
+            .order_by(EmployeeORM.country)
+        ).all()
+
+        return [
+            CountryInsight(
+                country=row.country,
+                headcount=row.headcount,
+                min_salary=Salary(cents=row.min_cents),
+                max_salary=Salary(cents=row.max_cents),
+                avg_salary=Salary(cents=int(round(row.avg_cents))),
+            )
+            for row in rows
+        ]
 
     def list(
         self,
