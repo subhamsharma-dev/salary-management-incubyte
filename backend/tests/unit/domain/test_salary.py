@@ -21,3 +21,9 @@ def test_salary_rejects_non_positive_cents(cents):
 def test_salary_rejects_non_integer_cents(cents):
     with pytest.raises(TypeError):
         Salary(cents=cents)
+
+
+def test_salary_can_be_built_from_dollars():
+    salary = Salary.from_dollars(50_000)
+
+    assert salary.cents == 5_000_000
