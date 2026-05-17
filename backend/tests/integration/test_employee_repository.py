@@ -217,3 +217,26 @@ def test_repository_aggregates_percentiles_by_country(employee_repository):
     assert us.median_salary.cents == 300
     assert us.p25_salary.cents == 200
     assert us.p75_salary.cents == 400
+
+
+def test_repository_aggregates_avg_salary_by_country_and_job_title(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="us-eng-1@example.com"),
+        country=Country(code="US"), job_title="Engineer", salary=Salary(cents=100),
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="us-eng-2@example.com"),
+        country=Country(code="US"), job_title="Engineer", salary=Salary(cents=200),
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="us-mgr@example.com"),
+        country=Country(code="US"), job_title="Manager", salary=Salary(cents=500),
+    )))
+
+    insights = employee_repository.aggregate_by_country_job_title()
+
+    by_pair = {(i.country, i.job_title): i for i in insights}
+    assert by_pair[("US", "Engineer")].avg_salary.cents == 150
+    assert by_pair[("US", "Engineer")].headcount == 2
+    assert by_pair[("US", "Manager")].avg_salary.cents == 500
+    assert by_pair[("US", "Manager")].headcount == 1
