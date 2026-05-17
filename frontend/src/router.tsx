@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 
 import { Layout } from './components/Layout'
+import { employeesSearchSchema } from './features/employees/searchSchema'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -20,13 +21,14 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: () => {
-    throw redirect({ to: '/employees' })
+    throw redirect({ to: '/employees', search: { page: 1 } })
   },
 })
 
 const employeesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/employees',
+  validateSearch: employeesSearchSchema,
   component: () => <p>An HR tool for a 10,000-employee organisation.</p>,
 })
 

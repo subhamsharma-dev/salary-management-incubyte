@@ -1,3 +1,6 @@
+import { useNavigate, useSearch } from '@tanstack/react-router'
+
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -10,33 +13,44 @@ import {
 import { useEmployees } from '../queries'
 
 export function EmployeeListPage() {
-  const { data, isPending, isError } = useEmployees({})
+  const { page } = useSearch({ from: '/employees' })
+  const navigate = useNavigate()
+  const { data, isPending, isError } = useEmployees({ page })
 
   if (isPending) return <p>Loading…</p>
   if (isError) return <p>Failed to load employees.</p>
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Job title</TableHead>
-          <TableHead>Department</TableHead>
-          <TableHead>Country</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.items.map((employee) => (
-          <TableRow key={employee.id}>
-            <TableCell>{employee.full_name}</TableCell>
-            <TableCell>{employee.email}</TableCell>
-            <TableCell>{employee.job_title}</TableCell>
-            <TableCell>{employee.department}</TableCell>
-            <TableCell>{employee.country}</TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Job title</TableHead>
+            <TableHead>Department</TableHead>
+            <TableHead>Country</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {data.items.map((employee) => (
+            <TableRow key={employee.id}>
+              <TableCell>{employee.full_name}</TableCell>
+              <TableCell>{employee.email}</TableCell>
+              <TableCell>{employee.job_title}</TableCell>
+              <TableCell>{employee.department}</TableCell>
+              <TableCell>{employee.country}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Button
+        onClick={() =>
+          navigate({ to: '/employees', search: { page: page + 1 } })
+        }
+      >
+        Next
+      </Button>
+    </>
   )
 }

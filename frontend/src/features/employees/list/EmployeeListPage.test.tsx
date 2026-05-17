@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RouterProvider } from '@tanstack/react-router'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
 import { describe, it, expect } from 'vitest'
 
-import { EmployeeListPage } from './EmployeeListPage'
 import { server } from '../../../mocks/server'
+import { createTestRouter } from '../../../test/createTestRouter'
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -56,7 +58,8 @@ describe('EmployeeListPage', () => {
       }),
     )
 
-    render(<EmployeeListPage />, { wrapper })
+    const testRouter = createTestRouter(['/employees'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
 
     await waitFor(() =>
       expect(screen.getByText('Ada Lovelace')).toBeInTheDocument(),
@@ -64,5 +67,47 @@ describe('EmployeeListPage', () => {
     expect(screen.getByText('Grace Hopper')).toBeInTheDocument()
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
     expect(screen.getByText('Admiral')).toBeInTheDocument()
+  })
+
+  it('reads page from URL and navigates on Next click', async () => {
+    let receivedPage: string | null = null
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        receivedPage = new URL(request.url).searchParams.get('page')
+        const page = Number(receivedPage ?? '1')
+        return HttpResponse.json({
+          items: [
+            {
+              id: `00000000-0000-0000-0000-00000000000${page}`,
+              full_name: `Employee Page ${page}`,
+              email: `p${page}@example.com`,
+              job_title: 'Engineer',
+              department: 'engineering',
+              country: 'GB',
+              salary_cents: 10_000_000,
+              employment_type: 'full_time',
+              hire_date: '2024-01-01',
+              is_deleted: false,
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+            },
+          ],
+          total: 150,
+          page,
+          page_size: 50,
+        })
+      }),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=2'])
+
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await waitFor(() => expect(receivedPage).toBe('2'))
+    expect(await screen.findByText('Employee Page 2')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /next/i }))
+
+    await waitFor(() => expect(receivedPage).toBe('3'))
   })
 })
