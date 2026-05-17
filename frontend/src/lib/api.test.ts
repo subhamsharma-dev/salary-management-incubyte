@@ -32,10 +32,34 @@ describe('listEmployees', () => {
       }),
     )
 
-    const page = await listEmployees()
+    const page = await listEmployees({})
 
     expect(page.total).toBe(1)
     expect(page.items).toHaveLength(1)
     expect(page.items[0].full_name).toBe('Ada Lovelace')
+  })
+
+  it('forwards params as query string', async () => {
+    let capturedUrl = ''
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        capturedUrl = request.url
+        return HttpResponse.json({ items: [], total: 0, page: 2, page_size: 25 })
+      }),
+    )
+
+    await listEmployees({
+      page: 2,
+      page_size: 25,
+      q: 'ada',
+      country: 'GB',
+      department: 'engineering',
+    })
+
+    expect(capturedUrl).toContain('page=2')
+    expect(capturedUrl).toContain('page_size=25')
+    expect(capturedUrl).toContain('q=ada')
+    expect(capturedUrl).toContain('country=GB')
+    expect(capturedUrl).toContain('department=engineering')
   })
 })

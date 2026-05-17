@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { listEmployees, type EmployeePage } from '@/lib/api'
+import { listEmployees, type EmployeePage, type ListEmployeesParams } from '@/lib/api'
 
-export function useEmployees() {
+export function useEmployees(params: ListEmployeesParams) {
   return useQuery<EmployeePage>({
-    queryKey: ['employees'],
-    queryFn: listEmployees,
+    queryKey: ['employees', params],
+    queryFn: () => listEmployees(params),
   })
 }

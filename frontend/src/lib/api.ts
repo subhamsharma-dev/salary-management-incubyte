@@ -22,8 +22,27 @@ export interface EmployeePage {
   page_size: number
 }
 
-export async function listEmployees(): Promise<EmployeePage> {
-  const response = await fetch(`${BASE_URL}/employees`)
+export interface ListEmployeesParams {
+  page?: number
+  page_size?: number
+  q?: string
+  country?: string
+  department?: string
+}
+
+function buildQueryString(params: ListEmployeesParams): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') {
+      search.set(key, String(value))
+    }
+  }
+  const query = search.toString()
+  return query ? `?${query}` : ''
+}
+
+export async function listEmployees(params: ListEmployeesParams): Promise<EmployeePage> {
+  const response = await fetch(`${BASE_URL}/employees${buildQueryString(params)}`)
   if (!response.ok) {
     throw new Error(`Failed to list employees: ${response.status}`)
   }

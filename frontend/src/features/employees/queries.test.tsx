@@ -42,10 +42,50 @@ describe('useEmployees', () => {
       }),
     )
 
-    const { result } = renderHook(() => useEmployees(), { wrapper })
+    const { result } = renderHook(() => useEmployees({}), { wrapper })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data?.total).toBe(1)
     expect(result.current.data?.items[0].full_name).toBe('Grace Hopper')
+  })
+
+  it('passes search params to the backend', async () => {
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q') ?? ''
+        if (q === 'ada') {
+          return HttpResponse.json({
+            items: [
+              {
+                id: '33333333-3333-3333-3333-333333333333',
+                full_name: 'Ada Lovelace',
+                email: 'ada@example.com',
+                job_title: 'Engineer',
+                department: 'engineering',
+                country: 'GB',
+                salary_cents: 12_000_000,
+                employment_type: 'full_time',
+                hire_date: '2024-01-15',
+                is_deleted: false,
+                created_at: '2024-01-15T00:00:00Z',
+                updated_at: '2024-01-15T00:00:00Z',
+              },
+            ],
+            total: 1,
+            page: 1,
+            page_size: 50,
+          })
+        }
+        return HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 })
+      }),
+    )
+
+    const { result: ada } = renderHook(() => useEmployees({ q: 'ada' }), { wrapper })
+    await waitFor(() => expect(ada.current.isSuccess).toBe(true))
+    expect(ada.current.data?.items[0].full_name).toBe('Ada Lovelace')
+
+    const { result: empty } = renderHook(() => useEmployees({ q: 'nobody' }), { wrapper })
+    await waitFor(() => expect(empty.current.isSuccess).toBe(true))
+    expect(empty.current.data?.items).toHaveLength(0)
   })
 })
