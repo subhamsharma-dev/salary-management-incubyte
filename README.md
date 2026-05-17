@@ -5,7 +5,7 @@ Built test-first.
 
 ## Live
 
-- **App:** TBD (Vercel — fill in after first deploy)
+- **App:** <https://salary-management-incubyte-sandy.vercel.app/>
 - **API:** <https://salary-management-incubyte.fly.dev> (`/docs` for OpenAPI)
 - **Demo video:** TBD
 
