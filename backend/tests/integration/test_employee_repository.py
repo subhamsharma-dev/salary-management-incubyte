@@ -170,3 +170,15 @@ def test_repository_mark_deleted_sets_is_deleted_flag(employee_repository):
     fetched = employee_repository.get(employee.id)
     assert fetched is not None
     assert fetched.is_deleted is True
+
+
+def test_repository_update_replaces_employee_fields(employee_repository):
+    original = Employee(**_valid_employee_kwargs(full_name="Jane Doe"))
+    employee_repository.add(original)
+
+    updated = original.model_copy(update={"full_name": "Jane Smith"})
+    employee_repository.update(updated)
+
+    fetched = employee_repository.get(original.id)
+    assert fetched is not None
+    assert fetched.full_name == "Jane Smith"
