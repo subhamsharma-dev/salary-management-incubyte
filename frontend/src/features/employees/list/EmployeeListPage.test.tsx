@@ -67,6 +67,7 @@ describe('EmployeeListPage', () => {
     expect(screen.getByText('Grace Hopper')).toBeInTheDocument()
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
     expect(screen.getByText('Admiral')).toBeInTheDocument()
+    expect(screen.getAllByText('Engineering')).not.toHaveLength(0)
   })
 
   it('reads page from URL and navigates on Next click', async () => {

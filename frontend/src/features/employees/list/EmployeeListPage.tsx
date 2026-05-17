@@ -153,7 +153,7 @@ export function EmployeeListPage() {
                 <TableCell>{employee.full_name}</TableCell>
                 <TableCell>{employee.email}</TableCell>
                 <TableCell>{employee.job_title}</TableCell>
-                <TableCell>{employee.department}</TableCell>
+                <TableCell>{humanize(employee.department)}</TableCell>
                 <TableCell>{employee.country}</TableCell>
                 <TableCell className="text-right">
                   <Button
