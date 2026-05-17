@@ -1,0 +1,26 @@
+# Local virtualenv
+.venv/
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Tests (production image doesn't need them)
+tests/
+
+# Local DB files (volume-mounted in production)
+*.db
+*.sqlite
+*.sqlite3
+
+# Env / secrets
+.env
+.env.local
+
+# Misc
+.gitignore
+README.md
