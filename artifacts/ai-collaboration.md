@@ -154,6 +154,37 @@ The harness blocked several actions Claude would have refused anyway:
   - `UpdateEmployeeInput` fields all `| None = None` for true partial update — service
     only carries forward fields the caller provided.
 
+### API layer
+- Commits: d5c38a6..de7210f (chore: deps → /health bootstrap → POST → GET by id → list with query params → PATCH → DELETE → insights router)
+- Approaches proposed: (a) single router | (b) split routers | (c) middleware-heavy → picked **(b)**: `app/api/employees.py` + `app/api/insights.py`.
+- Sub-choices: (s2) lifespan-managed engine on `app.state.session_factory`; Fly.io for deploy (deferred to deployment feature).
+- Most useful prompt or moment: cycle 2 hitting two SQLite + FastAPI gotchas in succession —
+  (1) `sqlite3.ProgrammingError: SQLite objects created in a thread can only be used in that
+  same thread` (FastAPI handlers run in a thread pool; fix: `check_same_thread=False`),
+  (2) `no such table: employees` (`:memory:` SQLite is per-connection; fix: `StaticPool`).
+  Both fixes baked into `create_engine_for_url` so test and prod share the same factory.
+- What I rejected from Claude's suggestions: n/a — accepted (b), (s2), Fly.io as proposed.
+- What Claude flagged that I would have missed:
+  - SQLite `check_same_thread` + FastAPI thread pool interaction.
+  - SQLite `:memory:` databases are per-connection; `StaticPool` is the canonical fix.
+  - Cycle 1's health endpoint deliberately skipping engine wiring — keeps cycle 1 minimal,
+    forces the *real* DB plumbing into cycle 2 where it's demanded.
+  - `app.dependency_overrides[get_session] = lambda: session` instead of context-managing
+    `TestClient(app)` — avoids running the lifespan in tests; no rogue `app.db` file.
+  - Check-then-update pattern for PATCH/DELETE — separates "not found → 404" from
+    "validation error → 422" without entangling them in a single `try/except ValueError`.
+  - Per-resource response models (`EmployeeResponse`, `EmployeePageResponse`,
+    `CountryInsightResponse`, `CountryJobTitleInsightResponse`) with `from_domain()` /
+    `from_page()` classmethods — flattens value objects on the wire
+    (`email.address → email`, `salary.cents → salary_cents`), centralises domain↔wire
+    mapping.
+- TDD discipline overrides: none — every endpoint cycle was proper red-then-green.
+- Notable Rule 5 callouts:
+  - SQLite + FastAPI threading and `:memory:` pool quirks (above).
+  - `DATABASE_URL` env var with sensible defaults: `sqlite:///./app.db` local, set
+    explicitly in deployment.
+  - `204 No Content` for DELETE (proper REST), not 200 with body.
+
 ### Backend tooling chore pass
 - Commits: 2988772..83e8d39 (Pydantic strict=True across domain; ruff + mypy with strict-on-domain; Makefile)
 - Approaches proposed: n/a (closing-the-loop chore, not a feature menu)
