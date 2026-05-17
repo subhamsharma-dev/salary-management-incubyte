@@ -6,14 +6,19 @@ CLI (next cycle): `python -m app.seed.run --count N --reset`.
 
 from __future__ import annotations
 
+import argparse
+import os
 import random
 import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
+import app.repositories.orm  # noqa: F401  -- register EmployeeORM on Base.metadata
+from app.db.base import Base
+from app.db.engine import create_engine_for_url
 from app.domain.department import Department
 from app.domain.employment_type import EmploymentType
 from app.repositories.orm import EmployeeORM
@@ -64,3 +69,30 @@ def _generate_rows(count: int) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def main(argv: list[str] | None = None) -> None:
+    """CLI entry point: `python -m app.seed.run --count N [--reset]`."""
+    parser = argparse.ArgumentParser(description="Seed the salary-management database.")
+    parser.add_argument("--count", type=int, default=10_000, help="Rows to insert.")
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Drop and recreate the schema before seeding (destructive).",
+    )
+    args = parser.parse_args(argv)
+
+    url = os.environ.get("DATABASE_URL", "sqlite:///./app.db")
+    engine = create_engine_for_url(url)
+    try:
+        if args.reset:
+            Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
+        with sessionmaker(bind=engine)() as session:
+            seed(session, count=args.count)
+    finally:
+        engine.dispose()
+
+
+if __name__ == "__main__":
+    main()
