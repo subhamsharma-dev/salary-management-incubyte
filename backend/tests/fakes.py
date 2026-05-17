@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from uuid import UUID
 
+from app.db.engine import _percentile
 from app.domain.department import Department
 from app.domain.employee import Employee
 from app.domain.salary import Salary
@@ -85,13 +86,19 @@ class InMemoryEmployeeRepository:
                 continue
             by_country[employee.country.code].append(employee.salary.cents)
 
-        return [
-            CountryInsight(
-                country=country,
-                headcount=len(salaries),
-                min_salary=Salary(cents=min(salaries)),
-                max_salary=Salary(cents=max(salaries)),
-                avg_salary=Salary(cents=int(round(sum(salaries) / len(salaries)))),
+        insights = []
+        for country, salaries in sorted(by_country.items()):
+            floats = [float(s) for s in salaries]
+            insights.append(
+                CountryInsight(
+                    country=country,
+                    headcount=len(salaries),
+                    min_salary=Salary(cents=min(salaries)),
+                    max_salary=Salary(cents=max(salaries)),
+                    avg_salary=Salary(cents=int(round(sum(salaries) / len(salaries)))),
+                    median_salary=Salary(cents=int(round(_percentile(floats, 0.50) or 0))),
+                    p25_salary=Salary(cents=int(round(_percentile(floats, 0.25) or 0))),
+                    p75_salary=Salary(cents=int(round(_percentile(floats, 0.75) or 0))),
+                )
             )
-            for country, salaries in sorted(by_country.items())
-        ]
+        return insights

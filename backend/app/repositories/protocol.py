@@ -27,6 +27,9 @@ class CountryInsight(BaseModel):
     min_salary: Salary
     max_salary: Salary
     avg_salary: Salary
+    median_salary: Salary
+    p25_salary: Salary
+    p75_salary: Salary
 
 
 class EmployeeRepository(Protocol):

@@ -76,6 +76,9 @@ class SqlAlchemyEmployeeRepository:
                 func.min(EmployeeORM.salary_cents).label("min_cents"),
                 func.max(EmployeeORM.salary_cents).label("max_cents"),
                 func.avg(EmployeeORM.salary_cents).label("avg_cents"),
+                func.p25(EmployeeORM.salary_cents).label("p25_cents"),
+                func.p50(EmployeeORM.salary_cents).label("p50_cents"),
+                func.p75(EmployeeORM.salary_cents).label("p75_cents"),
             )
             .where(EmployeeORM.is_deleted == False)  # noqa: E712
             .group_by(EmployeeORM.country)
@@ -89,6 +92,9 @@ class SqlAlchemyEmployeeRepository:
                 min_salary=Salary(cents=row.min_cents),
                 max_salary=Salary(cents=row.max_cents),
                 avg_salary=Salary(cents=int(round(row.avg_cents))),
+                median_salary=Salary(cents=int(round(row.p50_cents))),
+                p25_salary=Salary(cents=int(round(row.p25_cents))),
+                p75_salary=Salary(cents=int(round(row.p75_cents))),
             )
             for row in rows
         ]
