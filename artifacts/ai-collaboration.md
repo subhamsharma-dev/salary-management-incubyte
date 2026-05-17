@@ -102,6 +102,35 @@ The harness blocked several actions Claude would have refused anyway:
   - Employee `_sets_sensible_defaults_for_server_fields` passed from first run because cycle 1's prod code already set sensible defaults; called out in-thread.
 - Notable Rule 5 callouts: integer cents for money; EmailStr rejects single-label domains by default; StrEnum vs plain Enum; SQLite has no native percentile (deferred to repository layer's aggregation cycles).
 
+### Repository layer
+- Commits: fa520fa..895213d (SQLAlchemy dep → add/get → list → pagination → filters → soft-delete-aware → search → mark_deleted → update → InMemoryEmployeeRepository fake → aggregate_by_country with percentiles → aggregate_by_country_job_title)
+- Approaches proposed: minimum | standard | robust → picked **standard** (Protocol + concrete SqlAlchemy + in-memory fake; separate ORM from domain).
+- Sub-choices: (p1) Protocol lives in `app/repositories/protocol.py`; (β) percentiles via custom SQLite aggregates registered on each connection through `sqlalchemy.event.listens_for("connect")`.
+- Most useful prompt or moment: cycle 1's round-trip test catching SQLite stripping
+  `tzinfo` from datetime values — would have shipped silent "all datetimes naive" bug
+  otherwise. Fixed inline with an `_as_utc` mapper helper.
+- What I rejected from Claude's suggestions: n/a — accepted (a) CRUD-before-insights,
+  (b) Standard, (p1) Protocol location, (β) percentile strategy. Mostly Claude's defaults.
+- What Claude flagged that I would have missed:
+  - SQLite stripping `tzinfo` on datetime round-trip (caught at the first integration
+    test; `_as_utc` mapper helper).
+  - `def list(self, ...)` in the Protocol shadowing the builtin `list` when used in
+    annotations (`list[CountryInsight]` resolved to the method, not the type) — fixed
+    with `from __future__ import annotations`.
+  - SQLite's lack of native percentile + the cleanest bridge being custom Python
+    aggregates registered per-connection; kept the insight query pure SQL.
+  - Stable pagination needing deterministic ORDER BY (`full_name, id` tiebreaker).
+  - Two-query filter+count pattern — built one `filters` list, applied to both row
+    and count selects.
+- TDD discipline overrides: none — proper red-then-green throughout, including a brief
+  red-on-main between the test and feat commits (matches §9's example pattern).
+- Notable Rule 5 callouts:
+  - Percentile strategy → custom SQLite aggregates (`trade-offs.md` entry).
+  - `Page` Pydantic model in `protocol.py` rather than a tuple — keeps the inter-layer
+    DTO type explicit.
+  - Module-private helpers `_VALID_CODES`, `_percentile`, `_as_utc` (single underscore
+    means "importable across module boundary but not API").
+
 ### Backend tooling chore pass
 - Commits: 2988772..83e8d39 (Pydantic strict=True across domain; ruff + mypy with strict-on-domain; Makefile)
 - Approaches proposed: n/a (closing-the-loop chore, not a feature menu)
