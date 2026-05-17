@@ -10,6 +10,7 @@ from app.api.employees import router as employees_router
 from app.api.insights import router as insights_router
 from app.db.base import Base
 from app.db.engine import create_engine_for_url
+from app.seed.run import seed_if_empty
 
 
 def _database_url() -> str:
@@ -22,6 +23,11 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
     Base.metadata.create_all(engine)
     fastapi_app.state.engine = engine
     fastapi_app.state.session_factory = sessionmaker(bind=engine)
+    # Auto-seed on cold start when the employees table is empty so the deployed
+    # app is demo-ready on first deploy without a manual `fly ssh` step.
+    # Idempotent: returns False on subsequent cold starts once rows exist.
+    with fastapi_app.state.session_factory() as session:
+        seed_if_empty(session)
     try:
         yield
     finally:
