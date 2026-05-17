@@ -76,3 +76,13 @@ Measure first, then add.
 `frozenset`. Picked JSON over a new `pycountry` dependency (§10: no new deps)
 and over a Python literal in `country.py` (auditable as data, not code). Cost:
 one-shot file I/O at import; failure loud and immediate.
+
+## Domain value objects — Pydantic, not frozen dataclasses
+
+`Salary`, `Country`, `Email` started as `@dataclass(frozen=True)` with hand-rolled
+`__post_init__` validation; ported mid-build to `pydantic.BaseModel`. Reasons:
+declarative invariants (`Field(gt=0)`, `StrictInt`, `EmailStr`) replace hand-written
+checks; `pydantic.ValidationError <: ValueError` so prior tests stayed valid; consistency
+with Pydantic already in `schemas/`. Cost: softens §7 to "stdlib + Pydantic" rather than
+"pure stdlib." Documented in `ai-collaboration.md` as a real pivot, not a fabricated
+straight line.
