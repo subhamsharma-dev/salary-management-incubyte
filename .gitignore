@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Claude worktrees (transient checkouts; .claude/settings.json IS tracked)
+.claude/worktrees/
+
+# Python (defensive; backend/.gitignore is the primary)
+__pycache__/
+*.py[cod]
+.venv/
+
+# Node / frontend (preemptive)
+node_modules/
+dist/
+.next/
+.turbo/
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
