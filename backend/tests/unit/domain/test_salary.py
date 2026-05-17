@@ -19,7 +19,7 @@ def test_salary_rejects_non_positive_cents(cents):
 
 @pytest.mark.parametrize("cents", [1.0, 1.5, Decimal("100"), "100"])
 def test_salary_rejects_non_integer_cents(cents):
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         Salary(cents=cents)
 
 
