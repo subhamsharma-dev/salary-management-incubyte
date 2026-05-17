@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 
 import { Layout } from './components/Layout'
+import { EmployeeListPage } from './features/employees/list/EmployeeListPage'
 import { employeesSearchSchema } from './features/employees/searchSchema'
 
 const rootRoute = createRootRoute({
@@ -29,7 +30,7 @@ const employeesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/employees',
   validateSearch: employeesSearchSchema,
-  component: () => <p>An HR tool for a 10,000-employee organisation.</p>,
+  component: EmployeeListPage,
 })
 
 const routeTree = rootRoute.addChildren([indexRoute, employeesRoute])
