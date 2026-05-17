@@ -20,7 +20,7 @@ class Employee(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     full_name: str = Field(min_length=1, max_length=200)
     email: Email
-    job_title: str
+    job_title: str = Field(min_length=1, max_length=100)
     department: Department
     country: Country
     salary: Salary
