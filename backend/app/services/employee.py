@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,7 +12,12 @@ from app.domain.email import Email
 from app.domain.employee import Employee
 from app.domain.employment_type import EmploymentType
 from app.domain.salary import Salary
-from app.repositories.protocol import EmployeeRepository
+from app.repositories.protocol import (
+    CountryInsight,
+    CountryJobTitleInsight,
+    EmployeeRepository,
+    Page,
+)
 
 
 class CreateEmployeeInput(BaseModel):
@@ -43,3 +50,18 @@ class EmployeeService:
         )
         self._repo.add(employee)
         return employee
+
+    def get_employee(self, employee_id: UUID) -> Employee | None:
+        return self._repo.get(employee_id)
+
+    def list_employees(self, **kwargs: Any) -> Page:
+        return self._repo.list(**kwargs)
+
+    def soft_delete_employee(self, employee_id: UUID) -> None:
+        self._repo.mark_deleted(employee_id)
+
+    def insights_by_country(self) -> list[CountryInsight]:
+        return self._repo.aggregate_by_country()
+
+    def avg_by_country_job_title(self) -> list[CountryJobTitleInsight]:
+        return self._repo.aggregate_by_country_job_title()
