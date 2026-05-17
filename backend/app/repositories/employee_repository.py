@@ -42,17 +42,36 @@ class SqlAlchemyEmployeeRepository:
             return None
         return self._to_domain(row)
 
-    def list(self, *, page: int = 1, page_size: int = 50) -> Page:
+    def list(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 50,
+        country: str | None = None,
+        job_title: str | None = None,
+        department: Department | None = None,
+    ) -> Page:
+        filters = []
+        if country is not None:
+            filters.append(EmployeeORM.country == country)
+        if job_title is not None:
+            filters.append(EmployeeORM.job_title == job_title)
+        if department is not None:
+            filters.append(EmployeeORM.department == department.value)
+
         offset = (page - 1) * page_size
 
         rows = self._session.scalars(
             select(EmployeeORM)
+            .where(*filters)
             .order_by(EmployeeORM.full_name, EmployeeORM.id)
             .offset(offset)
             .limit(page_size)
         ).all()
 
-        total = self._session.scalar(select(func.count()).select_from(EmployeeORM)) or 0
+        total = self._session.scalar(
+            select(func.count()).select_from(EmployeeORM).where(*filters)
+        ) or 0
 
         return Page(
             items=[self._to_domain(row) for row in rows],
