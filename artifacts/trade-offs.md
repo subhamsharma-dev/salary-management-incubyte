@@ -69,3 +69,10 @@ deleted rows. A future hard-delete policy (e.g., 90 days) is a one-line cron job
 
 10K rows, single user, sync monolith. Adding any of these would be unjustified weight today.
 Measure first, then add.
+
+## ISO-3166 codes — vendored JSON, not pycountry
+
+`Country` reads `app/domain/data/iso3166_alpha2.json` at module import into a
+`frozenset`. Picked JSON over a new `pycountry` dependency (§10: no new deps)
+and over a Python literal in `country.py` (auditable as data, not code). Cost:
+one-shot file I/O at import; failure loud and immediate.
