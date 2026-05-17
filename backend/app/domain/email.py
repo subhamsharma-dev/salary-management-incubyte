@@ -1,9 +1,12 @@
-from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 
-@dataclass(frozen=True)
-class Email:
-    address: str
+class Email(BaseModel):
+    model_config = ConfigDict(frozen=True)
 
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "address", self.address.lower())
+    address: EmailStr
+
+    @field_validator("address", mode="after")
+    @classmethod
+    def _to_lowercase(cls, value: str) -> str:
+        return value.lower()
