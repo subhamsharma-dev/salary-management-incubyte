@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { describe, it, expect } from 'vitest'
 
-import { listEmployees } from './api'
+import { deleteEmployee, listEmployees } from './api'
 import { server } from '../mocks/server'
 
 describe('listEmployees', () => {
@@ -61,5 +61,22 @@ describe('listEmployees', () => {
     expect(capturedUrl).toContain('q=ada')
     expect(capturedUrl).toContain('country=GB')
     expect(capturedUrl).toContain('department=engineering')
+  })
+
+  it('sends a DELETE for an employee id', async () => {
+    let capturedMethod = ''
+    let capturedUrl = ''
+    server.use(
+      http.delete('*/employees/:id', ({ request }) => {
+        capturedMethod = request.method
+        capturedUrl = request.url
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await deleteEmployee('11111111-1111-1111-1111-111111111111')
+
+    expect(capturedMethod).toBe('DELETE')
+    expect(capturedUrl).toContain('/employees/11111111-1111-1111-1111-111111111111')
   })
 })

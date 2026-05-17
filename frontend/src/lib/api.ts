@@ -48,3 +48,10 @@ export async function listEmployees(params: ListEmployeesParams): Promise<Employ
   }
   return (await response.json()) as EmployeePage
 }
+
+export async function deleteEmployee(id: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/employees/${id}`, { method: 'DELETE' })
+  if (!response.ok) {
+    throw new Error(`Failed to delete employee: ${response.status}`)
+  }
+}
