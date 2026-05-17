@@ -113,4 +113,56 @@ describe('useEmployees', () => {
 
     await waitFor(() => expect(listCallCount).toBeGreaterThan(initialCount))
   })
+
+  it('keeps previous data while fetching with new params', async () => {
+    let callCount = 0
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        callCount++
+        const q = new URL(request.url).searchParams.get('q') ?? ''
+        return HttpResponse.json({
+          items: [
+            {
+              id: `00000000-0000-0000-0000-${String(callCount).padStart(12, '0')}`,
+              full_name: q || 'initial',
+              email: 'x@example.com',
+              job_title: 'X',
+              department: 'engineering',
+              country: 'GB',
+              salary_cents: 0,
+              employment_type: 'full_time',
+              hire_date: '2024-01-01',
+              is_deleted: false,
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+            },
+          ],
+          total: 1,
+          page: 1,
+          page_size: 50,
+        })
+      }),
+    )
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const sharedWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    const { result, rerender } = renderHook(
+      ({ q }) => useEmployees({ q }),
+      { wrapper: sharedWrapper, initialProps: { q: 'grace' as string | undefined } },
+    )
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.items[0].full_name).toBe('grace')
+
+    rerender({ q: 'ada' })
+
+    expect(result.current.data?.items[0].full_name).toBe('grace')
+    expect(result.current.isPending).toBe(false)
+
+    await waitFor(() =>
+      expect(result.current.data?.items[0].full_name).toBe('ada'),
+    )
+  })
 })

@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import {
   deleteEmployee,
@@ -11,6 +16,7 @@ export function useEmployees(params: ListEmployeesParams) {
   return useQuery<EmployeePage>({
     queryKey: ['employees', params],
     queryFn: () => listEmployees(params),
+    placeholderData: keepPreviousData,
   })
 }
 
