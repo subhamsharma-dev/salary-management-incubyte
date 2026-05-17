@@ -5,6 +5,7 @@ description = "Salary management tool for HR — backend"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "pydantic[email]>=2",
+    "sqlalchemy>=2.0",
 ]
 
 [dependency-groups]
