@@ -159,3 +159,14 @@ def test_repository_list_searches_by_job_title(employee_repository):
     page = employee_repository.list(q="engineer")
 
     assert {e.email.address for e in page.items} == {"a@example.com"}
+
+
+def test_repository_mark_deleted_sets_is_deleted_flag(employee_repository):
+    employee = Employee(**_valid_employee_kwargs())
+    employee_repository.add(employee)
+
+    employee_repository.mark_deleted(employee.id)
+
+    fetched = employee_repository.get(employee.id)
+    assert fetched is not None
+    assert fetched.is_deleted is True
