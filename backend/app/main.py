@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import sessionmaker
 
 import app.repositories.orm  # noqa: F401  -- register EmployeeORM on Base.metadata
@@ -35,6 +36,12 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Salary Management API", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(employees_router)
 app.include_router(insights_router)
 
