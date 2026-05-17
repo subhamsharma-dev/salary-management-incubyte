@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -35,11 +35,11 @@ def test_employee_stores_provided_fields():
 
 
 def test_employee_sets_sensible_defaults_for_server_fields():
-    before = datetime.now(timezone.utc)
+    before = datetime.now(UTC)
 
     employee = Employee(**_valid_employee_kwargs())
 
-    after = datetime.now(timezone.utc)
+    after = datetime.now(UTC)
 
     assert isinstance(employee.id, uuid.UUID)
     assert employee.is_deleted is False

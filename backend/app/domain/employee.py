@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -11,7 +11,7 @@ from app.domain.salary import Salary
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Employee(BaseModel):
