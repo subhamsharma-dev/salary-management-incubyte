@@ -210,6 +210,43 @@ The harness blocked several actions Claude would have refused anyway:
   - `DATABASE_URL` env var as the sole config knob between local/test/prod.
   - Deferred: Alembic (until schema evolves), Litestream backup, custom domain, CDN.
 
+### Seed script
+- Commits: d59c924..f380a86 (seed function → CLI with --count/--reset → README prod-seed docs → performance.md fill)
+- Approaches proposed: (a) ORM bulk | (b) Core bulk (per performance.md spec) | (c) raw dbapi executemany → picked **(c) → (c2) → effectively (b)**: developer initially picked (c) "because perf matters"; Claude pushed back that the (b)/(c) gap at 10K is sub-second and that (c) costs manual type conversion; developer pivoted to **(c2) ship (b) first, measure, escalate only if needed**. Measurement showed (b) at ~0.3 s — escalation unnecessary.
+- Sub-choice: (n1) hardcoded 100+100 name tuples in `app/seed/data.py` — exact fit for 10K unique pairs via `random.sample(range(N*M))` + divmod decode (per `performance.md`).
+- Most useful prompt or moment: the (c)→(c2) pivot. The instinct "perf matters → go
+  raw" is right *in the abstract* but wrong at this data size — measurement showed
+  Core bulk has 16× headroom on the 5 s budget. Caught before writing 100 lines of
+  manual type-conversion code.
+- What I rejected from Claude's suggestions: initial (b) default — wanted to skip
+  ahead to (c). Reverted to (b)-first after the gap analysis.
+- What Claude flagged that I would have missed:
+  - `random.sample(range(N*M))` + divmod decoding for unique `(first, last)` pairs
+    without ever materialising the Cartesian product.
+  - Email uniqueness via name-plus-serial-index (`first.last.N@example.com`) — a
+    plain `first.last@example.com` would collide once two rows share a name.
+  - Building rows as dicts with native Python types (`uuid.UUID`, `datetime`,
+    `date`) and letting SQLAlchemy Core handle the column-type conversion via the
+    existing `EmployeeORM` mapping — kept the seed path consistent with the rest
+    of the codebase (vs. raw dbapi, which would have hand-rolled the conversions).
+  - Production seeding via `fly ssh console -C "uv run … python -m app.seed.run"`
+    rather than `fly.toml`'s `release_command` — preserves "one explicit user
+    action" semantics; release_command would re-seed every deploy unless made
+    conditional.
+- TDD discipline overrides: none on correctness. The benchmark itself isn't
+  test-driven — it's measured per §12's escape hatch ("Seed-script tuning →
+  benchmarked in performance.md").
+- Notable Rule 5 callouts:
+  - **Commit frequency dominates row insert time** — measured ~42 s (naive,
+    commit-per-row) vs 0.7 s (ORM bulk, single commit) vs 0.3 s (Core bulk).
+    The 100× gap is `fsync` count, not SQL execution.
+  - **N×M = exact-fit for K unique pairs without Cartesian materialisation** —
+    100×100 = 10000 exactly. A larger seed would need either bigger N/M or
+    duplicate-tolerant `random.choices` instead of `random.sample`.
+  - **`tmp_path` + `monkeypatch DATABASE_URL`** in the CLI test — drives a real
+    file-backed SQLite (not `:memory:`) so the test exercises the production code
+    path through `create_engine_for_url` + `os.environ`.
+
 ### Backend tooling chore pass
 - Commits: 2988772..83e8d39 (Pydantic strict=True across domain; ruff + mypy with strict-on-domain; Makefile)
 - Approaches proposed: n/a (closing-the-loop chore, not a feature menu)
