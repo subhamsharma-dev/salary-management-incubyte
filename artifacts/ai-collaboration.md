@@ -302,6 +302,36 @@ The harness blocked several actions Claude would have refused anyway:
   - Hand-written TS interfaces over zod runtime validation — single consumer, schema lives in one place. Revisit when cycle 6's insights endpoints add richer shapes.
   - `useEmployees()` no-args today; `queryKey: ['employees']` literal. Both grow in cycle 4 (params + key composition).
 
+### Frontend list page (router, table, filters, delete)
+- Commits: 130a85d..1fe6ff5 (TanStack Router scaffold → shadcn primitives → params-aware api/hook → list page with rows → pagination via URL → debounced search → country filter → department filter → deleteEmployee + useDeleteEmployee → AlertDialog confirmation → wire page to route → layout polish → flicker fix). Backend CORS detour mid-cycle (645e3fc..2f5378b) was needed to make the prod backend serve dev origins.
+- Approaches proposed: (a) Minimum (list renders, no filters/router) | (b) Standard (router + list + search + pagination, defer filters/delete) | (c) Robust (full handoff scope: router + table + search + 2 filters + pagination + delete) → picked **(c)**. Sub-question (state location): (i) URL via TanStack Router | (ii) local useState → picked **(i) URL**.
+- Sub-choices: code-based TanStack Router (over file-based — 3-4 routes don't need codegen); inline `COUNTRIES`/`DEPARTMENTS` constants in the page (Rule of Three not yet hit); sentinel `'all'` for cleared Selects; `humanize()` inline helper for Title-Case department labels; AlertDialog confirmation over hard-delete; `placeholderData: keepPreviousData` for no-flicker filter changes; backend CORS `allow_origins=["*"]` (acceptable: §10 no-auth).
+- Most useful prompt or moment: The two browser-bug catches — "i am not able to see the changes in the UI" (CORS — missed by tests because they hit the in-process FastAPI app, not the deployed one) and "the complete page is reloading on typing, only the table should be reload" (flicker — tests pass on final state, never on transitional UI). Both exposed limits of green-tests-don't-mean-shipped and forced honest fixes (`feat(api): CORS middleware`, `fix(frontend): keepPreviousData`). Eye-test discipline matters even with tight unit coverage.
+- What I rejected from Claude's suggestions:
+  - First-letter-only humanize on the Department Select ("Human resources") → asked for Title-Case-every-word ("Human Resources").
+  - Default Confirm button styling in AlertDialog → asked for the destructive variant override (`bg-destructive text-destructive-foreground hover:bg-destructive/90`).
+  - The unstyled v1 page that closed cycle 4.9 ("UI not shadcn?") → triggered cycle 4.10 polish pass (container + toolbar flex + Card around table + tightened action column).
+  - The proposed `presentOrUndefined()` schema-side refactor — Claude itself reversed in step 6 of cycle 4.5, kept the asymmetric read/write code.
+- What Claude flagged that I would have missed:
+  - shadcn 4.7 CLI flag surface had drifted again (`--base-color` gone; preset names plain). Surfaced via `--help` before invoking each time.
+  - Radix Select / AlertDialog need jsdom polyfills (`hasPointerCapture`, `releasePointerCapture`, `scrollIntoView`, `ResizeObserver`) — bundled into `test-setup.ts` once, served Select + AlertDialog + future Radix primitives.
+  - TanStack Router's `useSearch({ from: '/employees' })` requires router context — refactored the bare-render existing test to use `createTestRouter` so the page could rely on real route hooks instead of branching for "no router" cases.
+  - The callback form `search: (prev) => ...` types `prev` as `Partial<EmployeesSearch>` despite `validateSearch` returning the full shape — sidestepped using the in-scope `page` value instead of the callback.
+  - `validateSearch` makes route params required at the type level, so the `/` → `/employees` redirect needed an explicit `search: { page: 1 }`.
+  - A shared route-search **schema module** (`searchSchema.ts`) — single source of truth that both `router.tsx` (prod) and `createTestRouter` (test) import. Otherwise the test would have duplicated the schema.
+  - Rule of Three fired at cycle 4.5: 3 different `navigate(...)` calls all spreading `q`/`country` → extracted `buildSearch()` helper. Kept the verbose `presentOrUndefined()` schema-side refactor *out* because the read/write asymmetry made a unified helper net-worse.
+- TDD discipline overrides:
+  - Cycles 4.0a (router scaffold), 4.0b (shadcn primitives), 4.9 (wire page → route), 4.10 (styling polish): all infrastructure / pure-visual per §12 — chore or refactor, eye-verified.
+  - Cycle 4.5 bundled polyfill infra with the first failing test for Select — single commit acceptable since polyfills are test-side prerequisite, not behaviour.
+  - Cycle 4.5 ended with `buildSearch` extracted in the same diff as the country filter feat. Flagged the §9 "never mix refactor with behaviour" rule and asked; developer chose single feat commit (charitable reading: helper was part of initial implementation, never lived in committed verbose form).
+  - Backend CORS detour used the §9 example pattern (separated `test:` then `feat:` commits) — brief red HEAD between commits.
+- Notable Rule 5 callouts:
+  - URL search params over local useState — refresh-safe, shareable, debugable; first-class typed support in TanStack Router via `validateSearch`.
+  - `placeholderData: keepPreviousData` — the canonical TanStack Query pattern for filter/pagination UIs; catches the gap that fresh-queryKey-per-rerender briefly returns no data.
+  - Backend CORS `allow_origins=["*"]` over a specific list — v1 has no auth, no cookies, no PII; wildcard avoids a moving-part on the Vercel deploy in cycle 7.
+  - Code-based TanStack Router for 3-4 routes — file-based codegen earns its keep at ~20 routes, not 4.
+  - `humanize()` inline rather than a util module — single consumer page; extract when cycle 5/6 displays department labels elsewhere.
+
 ---
 
 ## Closing notes
