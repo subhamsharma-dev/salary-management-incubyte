@@ -103,3 +103,19 @@ def test_patch_employee_returns_404_when_not_found(client):
     response = client.patch(f"/employees/{uuid.uuid4()}", json={"full_name": "X"})
 
     assert response.status_code == 404
+
+
+def test_delete_employee_soft_deletes(client, employee_repository):
+    employee = Employee(**valid_employee_kwargs())
+    employee_repository.add(employee)
+
+    response = client.delete(f"/employees/{employee.id}")
+
+    assert response.status_code == 204
+    assert employee_repository.get(employee.id).is_deleted is True
+
+
+def test_delete_employee_returns_404_when_not_found(client):
+    response = client.delete(f"/employees/{uuid.uuid4()}")
+
+    assert response.status_code == 404
