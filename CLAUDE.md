@@ -191,6 +191,9 @@ api → services → repositories → db
 Conventional Commits. `<type>(<scope>): <imperative summary>`. Types: `test`, `feat`, `fix`,
 `refactor`, `chore`, `docs`, `perf`.
 
+**Branch:** all commits land on `main`. No feature branches, no worktree branches. If you
+find yourself on another branch, stop and switch back to `main` before committing.
+
 Small and frequent. Aim for 20–30 commits over the build. Each cycle is typically 2–3 commits:
 
 ```
