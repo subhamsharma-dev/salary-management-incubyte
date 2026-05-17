@@ -182,3 +182,22 @@ def test_repository_update_replaces_employee_fields(employee_repository):
     fetched = employee_repository.get(original.id)
     assert fetched is not None
     assert fetched.full_name == "Jane Smith"
+
+
+def test_repository_aggregates_basic_stats_by_country(employee_repository):
+    for i, cents in enumerate([100, 200, 300, 400, 500]):
+        employee_repository.add(Employee(**_valid_employee_kwargs(
+            email=Email(address=f"u{i}@example.com"),
+            country=Country(code="US"),
+            salary=Salary(cents=cents),
+        )))
+
+    insights = employee_repository.aggregate_by_country()
+
+    assert len(insights) == 1
+    us = insights[0]
+    assert us.country == "US"
+    assert us.headcount == 5
+    assert us.min_salary.cents == 100
+    assert us.max_salary.cents == 500
+    assert us.avg_salary.cents == 300
