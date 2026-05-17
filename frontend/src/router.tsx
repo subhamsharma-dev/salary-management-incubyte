@@ -33,7 +33,31 @@ const employeesRoute = createRoute({
   component: EmployeeListPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, employeesRoute])
+const employeesNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/employees/new',
+  component: () => <p>New employee — coming soon…</p>,
+})
+
+const employeeDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/employees/$id',
+  component: () => <p>Employee detail — coming soon…</p>,
+})
+
+const employeeEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/employees/$id/edit',
+  component: () => <p>Employee edit — coming soon…</p>,
+})
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  employeesRoute,
+  employeesNewRoute,
+  employeeDetailRoute,
+  employeeEditRoute,
+])
 
 export const router = createRouter({ routeTree })
 
