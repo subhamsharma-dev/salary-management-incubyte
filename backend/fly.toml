@@ -3,8 +3,10 @@
 # Originally written by hand; `fly launch` regenerated this file when first deploying.
 # Manually corrected after regeneration:
 #   - internal_port reset to 8000 (matches the Dockerfile's `uvicorn --port 8000`).
-#   - grace_period bumped to 30s (Python web apps need >5s cold-start headroom for the
-#     Pydantic model build + SQLAlchemy engine init + Base.metadata.create_all).
+#   - grace_period bumped to 60s (Python web apps need >5s cold-start headroom for the
+#     Pydantic model build + SQLAlchemy engine init + Base.metadata.create_all + the
+#     auto-seed `SELECT COUNT(*)`; 30s wasn't enough on a stopped-machine redeploy and
+#     the rolling-update health check timed out).
 #
 # Deploy:
 #   cd backend && fly deploy
@@ -33,7 +35,7 @@ primary_region = 'ams'
   [[http_service.checks]]
     interval = '30s'
     timeout = '5s'
-    grace_period = '30s'
+    grace_period = '60s'
     method = 'GET'
     path = '/health'
 
