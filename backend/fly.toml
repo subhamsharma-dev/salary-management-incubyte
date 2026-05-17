@@ -1,0 +1,41 @@
+# fly.toml — Fly.io deployment for the salary-management backend.
+#
+# One-time setup (developer machine):
+#   fly auth login
+#   fly launch --no-deploy   # confirms the app name and region; do NOT let it overwrite this file
+#   fly volume create salary_data --region bom --size 1   # 1 GiB SQLite volume
+#
+# Deploy:
+#   cd backend && fly deploy
+
+app = "salary-management-backend"
+primary_region = "bom"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DATABASE_URL = "sqlite:////data/app.db"
+
+[[mounts]]
+  source = "salary_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[http_service.checks]]
+  grace_period = "5s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
