@@ -1,0 +1,15 @@
+[project]
+name = "salary-management-backend"
+version = "0.1.0"
+description = "Salary management tool for HR — backend"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
