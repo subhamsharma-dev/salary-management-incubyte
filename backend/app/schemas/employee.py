@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from app.domain.employee import Employee
+from app.repositories.protocol import Page
 
 
 class EmployeeResponse(BaseModel):
@@ -39,4 +40,22 @@ class EmployeeResponse(BaseModel):
             is_deleted=employee.is_deleted,
             created_at=employee.created_at,
             updated_at=employee.updated_at,
+        )
+
+
+class EmployeePageResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    items: list[EmployeeResponse]
+    total: int
+    page: int
+    page_size: int
+
+    @classmethod
+    def from_page(cls, page: Page) -> EmployeePageResponse:
+        return cls(
+            items=[EmployeeResponse.from_domain(e) for e in page.items],
+            total=page.total,
+            page=page.page,
+            page_size=page.page_size,
         )

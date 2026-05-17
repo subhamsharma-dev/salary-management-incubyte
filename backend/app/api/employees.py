@@ -4,7 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import get_employee_service
-from app.schemas.employee import EmployeeResponse
+from app.domain.department import Department
+from app.schemas.employee import EmployeePageResponse, EmployeeResponse
 from app.services.employee import CreateEmployeeInput, EmployeeService
 
 router = APIRouter(prefix="/employees", tags=["employees"])
@@ -17,6 +18,29 @@ def create_employee(
 ) -> EmployeeResponse:
     employee = service.create_employee(data)
     return EmployeeResponse.from_domain(employee)
+
+
+@router.get("", response_model=EmployeePageResponse)
+def list_employees(
+    service: Annotated[EmployeeService, Depends(get_employee_service)],
+    page: int = 1,
+    page_size: int = 50,
+    country: str | None = None,
+    job_title: str | None = None,
+    department: Department | None = None,
+    include_deleted: bool = False,
+    q: str | None = None,
+) -> EmployeePageResponse:
+    result = service.list_employees(
+        page=page,
+        page_size=page_size,
+        country=country,
+        job_title=job_title,
+        department=department,
+        include_deleted=include_deleted,
+        q=q,
+    )
+    return EmployeePageResponse.from_page(result)
 
 
 @router.get("/{employee_id}", response_model=EmployeeResponse)
