@@ -47,6 +47,25 @@ The app uses a 1 GiB volume mounted at `/data`; the SQLite file lives at `/data/
 
 Frontend → Vercel (TBD when the frontend lands).
 
+## Seed
+
+Local (against `backend/app.db`):
+
+```bash
+cd backend
+uv run python -m app.seed.run --count 10000 --reset
+```
+
+Production (against `/data/app.db` inside the Fly machine):
+
+```bash
+fly ssh console -a salary-management-incubyte \
+  -C "uv run --directory /app python -m app.seed.run --count 10000 --reset"
+```
+
+`--reset` drops + recreates the schema before inserting. Omit to append.
+`--count` defaults to 10,000.
+
 ## Repo
 
 ```
