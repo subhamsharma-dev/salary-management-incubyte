@@ -131,6 +131,29 @@ The harness blocked several actions Claude would have refused anyway:
   - Module-private helpers `_VALID_CODES`, `_percentile`, `_as_utc` (single underscore
     means "importable across module boundary but not API").
 
+### Services layer
+- Commits: 7e66a67..c773742 (refactor: extract test factory → create_employee → 5 passthroughs → update_employee with real logic)
+- Approaches proposed: minimum (single class) | standard (module functions) | robust (CQRS) → picked **(a)** single `EmployeeService` class. Robust (CQRS) forbidden by §10.
+- Most useful prompt or moment: finally extracting `valid_employee_kwargs` to
+  `tests/factories.py` — the service tests would have been the 4th occurrence; the helper
+  cleans up three earlier test files at the same time.
+- What I rejected from Claude's suggestions: n/a — accepted the single-class shape and
+  the passthrough-for-reads, logic-for-writes pattern.
+- What Claude flagged that I would have missed:
+  - Service tests use the in-memory fake (§8 mandate), not the SqlAlchemy repo — easy to
+    forget when switching from the integration-test pattern.
+  - Pydantic input models with primitives at the boundary (`email: str`,
+    `country: str`, `salary_cents: int`), value-object construction *inside* the service —
+    keeps the wire shape clean and centralises domain conversion.
+  - `model_copy(update={...})` re-validates the changed fields through Pydantic so invalid
+    partials fail at copy time, no separate validation step needed.
+- TDD discipline overrides: none.
+- Notable Rule 5 callouts:
+  - `**kwargs` on `list_employees` to forward the Protocol's surface verbatim — explicit
+    but loses mypy clarity. Could become a `TypedDict` when API needs the exact shape.
+  - `UpdateEmployeeInput` fields all `| None = None` for true partial update — service
+    only carries forward fields the caller provided.
+
 ### Backend tooling chore pass
 - Commits: 2988772..83e8d39 (Pydantic strict=True across domain; ruff + mypy with strict-on-domain; Makefile)
 - Approaches proposed: n/a (closing-the-loop chore, not a feature menu)
