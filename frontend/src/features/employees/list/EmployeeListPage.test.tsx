@@ -110,4 +110,22 @@ describe('EmployeeListPage', () => {
 
     await waitFor(() => expect(receivedPage).toBe('3'))
   })
+
+  it('debounces search input and sets q on URL', async () => {
+    let receivedQ: string | null = null
+    server.use(
+      http.get('*/employees', ({ request }) => {
+        receivedQ = new URL(request.url).searchParams.get('q')
+        return HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 })
+      }),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=1'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    const searchInput = await screen.findByRole('searchbox')
+    await userEvent.type(searchInput, 'ada')
+
+    await waitFor(() => expect(receivedQ).toBe('ada'), { timeout: 1000 })
+  })
 })
