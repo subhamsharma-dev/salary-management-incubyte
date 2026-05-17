@@ -94,3 +94,29 @@ def test_repository_list_filters_by_department(employee_repository):
     page = employee_repository.list(department=Department.ENGINEERING)
 
     assert {e.email.address for e in page.items} == {"e1@example.com"}
+
+
+def test_repository_list_excludes_soft_deleted_by_default(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="active@example.com"),
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="deleted@example.com"), is_deleted=True,
+    )))
+
+    page = employee_repository.list()
+
+    assert {e.email.address for e in page.items} == {"active@example.com"}
+
+
+def test_repository_list_includes_soft_deleted_when_requested(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="active@example.com"),
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="deleted@example.com"), is_deleted=True,
+    )))
+
+    page = employee_repository.list(include_deleted=True)
+
+    assert {e.email.address for e in page.items} == {"active@example.com", "deleted@example.com"}
