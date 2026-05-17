@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domain.country import Country
@@ -39,6 +40,10 @@ class SqlAlchemyEmployeeRepository:
         if row is None:
             return None
         return self._to_domain(row)
+
+    def list(self) -> list[Employee]:
+        rows = self._session.scalars(select(EmployeeORM)).all()
+        return [self._to_domain(row) for row in rows]
 
     @staticmethod
     def _to_domain(row: EmployeeORM) -> Employee:
