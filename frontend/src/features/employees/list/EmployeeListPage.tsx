@@ -109,7 +109,10 @@ export function EmployeeListPage() {
             variant="ghost"
             size="icon-sm"
             aria-label={`Delete ${row.original.full_name}`}
-            onClick={() => setDeleteCandidate(row.original)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setDeleteCandidate(row.original)
+            }}
           >
             <Trash2 />
           </Button>
@@ -191,6 +194,11 @@ export function EmployeeListPage() {
             ))}
           </SelectContent>
         </Select>
+        <div className="ml-auto">
+          <Button onClick={() => navigate({ to: '/employees/new' })}>
+            Add employee
+          </Button>
+        </div>
       </div>
       <Card>
         <Table>
@@ -213,7 +221,16 @@ export function EmployeeListPage() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className="cursor-pointer"
+                onClick={() =>
+                  navigate({
+                    to: '/employees/$id',
+                    params: { id: row.original.id },
+                  })
+                }
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
