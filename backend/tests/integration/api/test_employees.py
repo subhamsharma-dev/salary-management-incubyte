@@ -85,3 +85,21 @@ def test_get_employees_supports_search_q(client, employee_repository):
 
     body = response.json()
     assert body["total"] == 1
+
+
+def test_patch_employee_updates_fields(client, employee_repository):
+    employee = Employee(**valid_employee_kwargs(full_name="Jane Doe"))
+    employee_repository.add(employee)
+
+    response = client.patch(
+        f"/employees/{employee.id}", json={"full_name": "Jane Smith"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["full_name"] == "Jane Smith"
+
+
+def test_patch_employee_returns_404_when_not_found(client):
+    response = client.patch(f"/employees/{uuid.uuid4()}", json={"full_name": "X"})
+
+    assert response.status_code == 404
