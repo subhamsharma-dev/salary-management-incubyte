@@ -1,6 +1,12 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 import {
   AlertDialog,
@@ -84,6 +90,41 @@ export function EmployeeListPage() {
     }
   }, [page, data, navigate, q, country, department])
 
+  const columns = useMemo<ColumnDef<Employee>[]>(
+    () => [
+      { accessorKey: 'full_name', header: 'Name' },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'job_title', header: 'Job title' },
+      {
+        accessorKey: 'department',
+        header: 'Department',
+        cell: ({ getValue }) => humanize(getValue() as string),
+      },
+      { accessorKey: 'country', header: 'Country' },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Delete ${row.original.full_name}`}
+            onClick={() => setDeleteCandidate(row.original)}
+          >
+            <Trash2 />
+          </Button>
+        ),
+      },
+    ],
+    [],
+  )
+
+  const table = useReactTable({
+    data: data?.items ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  })
+
   function selectCountry(value: string) {
     navigate({
       to: '/employees',
@@ -110,11 +151,14 @@ export function EmployeeListPage() {
   if (isError) return <p>Failed to load employees.</p>
 
   const lastPage = Math.max(1, Math.ceil(data.total / data.page_size))
+  const rangeStart = (page - 1) * data.page_size + 1
+  const rangeEnd = Math.min(page * data.page_size, data.total)
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
         <Input
+          autoFocus
           type="search"
           placeholder="Search…"
           value={searchText}
@@ -151,61 +195,68 @@ export function EmployeeListPage() {
       <Card>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Job title</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Country</TableHead>
-              <TableHead className="w-12" aria-label="Actions" />
-            </TableRow>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={header.column.id === 'actions' ? 'w-12' : undefined}
+                    aria-label={header.column.id === 'actions' ? 'Actions' : undefined}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
-            {data.items.map((employee) => (
-              <TableRow key={employee.id}>
-                <TableCell>{employee.full_name}</TableCell>
-                <TableCell>{employee.email}</TableCell>
-                <TableCell>{employee.job_title}</TableCell>
-                <TableCell>{humanize(employee.department)}</TableCell>
-                <TableCell>{employee.country}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Delete ${employee.full_name}`}
-                    onClick={() => setDeleteCandidate(employee)}
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={cell.column.id === 'actions' ? 'text-right' : undefined}
                   >
-                    <Trash2 />
-                  </Button>
-                </TableCell>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
-      <div className="flex gap-2">
-        <Button
-          disabled={page <= 1}
-          onClick={() =>
-            navigate({
-              to: '/employees',
-              search: buildSearch({ page: page - 1, q, country, department }),
-            })
-          }
-        >
-          Previous
-        </Button>
-        <Button
-          disabled={page >= lastPage}
-          onClick={() =>
-            navigate({
-              to: '/employees',
-              search: buildSearch({ page: page + 1, q, country, department }),
-            })
-          }
-        >
-          Next
-        </Button>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {data.total === 0
+            ? 'No employees match the current filters.'
+            : `Showing ${rangeStart}–${rangeEnd} of ${data.total}`}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            disabled={page <= 1}
+            onClick={() =>
+              navigate({
+                to: '/employees',
+                search: buildSearch({ page: page - 1, q, country, department }),
+              })
+            }
+          >
+            <ChevronLeft /> Previous
+          </Button>
+          <Button
+            disabled={page >= lastPage}
+            onClick={() =>
+              navigate({
+                to: '/employees',
+                search: buildSearch({ page: page + 1, q, country, department }),
+              })
+            }
+          >
+            Next <ChevronRight />
+          </Button>
+        </div>
       </div>
       <AlertDialog
         open={deleteCandidate !== null}

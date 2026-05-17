@@ -168,6 +168,40 @@ describe('EmployeeListPage', () => {
     await waitFor(() => expect(receivedDepartment).toBe('engineering'))
   })
 
+  it('shows total count and current range', async () => {
+    server.use(
+      http.get('*/employees', () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: '11111111-1111-1111-1111-111111111111',
+              full_name: 'Sole Employee',
+              email: 'sole@example.com',
+              job_title: 'Engineer',
+              department: 'engineering',
+              country: 'GB',
+              salary_cents: 0,
+              employment_type: 'full_time',
+              hire_date: '2024-01-01',
+              is_deleted: false,
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+            },
+          ],
+          total: 250,
+          page: 2,
+          page_size: 50,
+        }),
+      ),
+    )
+
+    const testRouter = createTestRouter(['/employees?page=2'])
+    render(<RouterProvider router={testRouter} />, { wrapper })
+
+    await screen.findByText('Sole Employee')
+    expect(screen.getByText(/showing 51.{1,3}100 of 250/i)).toBeInTheDocument()
+  })
+
   it('disables Next button when current page is the last page', async () => {
     server.use(
       http.get('*/employees', () =>
