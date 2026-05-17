@@ -94,6 +94,14 @@ cycles are queued. At that point, before starting the next feature's menu, invok
 developer first, commit as `docs: log <feature> in ai-collaboration`. This is a §11 DoD
 gate — don't skip even when the feature feels small.
 
+### Rule 8 — Keep `design.md` and `architecture.md` current.
+
+When a Rule 5 / Rule 6 decision contradicts a row in `design.md` or `architecture.md`
+(e.g. data type changes, indexes added, schema shape shifts), update those source docs
+**in the same commit** — not just `ai-collaboration.md` / `trade-offs.md`. They are
+living documents that the 5-minute reviewer reads first, not historical input. Silent
+drift between specs and code misleads reviewers more than absence would.
+
 ---
 
 ## 5. Tech stack (pinned)
