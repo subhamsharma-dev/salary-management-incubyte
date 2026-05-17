@@ -1,6 +1,8 @@
 import uuid
 from datetime import date, datetime, timezone
 
+import pytest
+
 from app.domain.country import Country
 from app.domain.department import Department
 from app.domain.email import Email
@@ -47,3 +49,18 @@ def test_employee_sets_sensible_defaults_for_server_fields():
     assert employee.is_deleted is False
     assert before <= employee.created_at <= after
     assert before <= employee.updated_at <= after
+
+
+@pytest.mark.parametrize("full_name", ["", "a" * 201])
+def test_employee_rejects_invalid_full_name(full_name):
+    with pytest.raises(ValueError):
+        Employee(
+            full_name=full_name,
+            email=Email(address="jane@example.com"),
+            job_title="Senior Engineer",
+            department=Department.ENGINEERING,
+            country=Country(code="US"),
+            salary=Salary(cents=12_000_000),
+            employment_type=EmploymentType.FULL_TIME,
+            hire_date=date(2020, 1, 15),
+        )
