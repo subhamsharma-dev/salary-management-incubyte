@@ -4,7 +4,13 @@ import { http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
 import { describe, it, expect } from 'vitest'
 
-import { useDeleteEmployee, useEmployees } from './queries'
+import {
+  useCreateEmployee,
+  useDeleteEmployee,
+  useEmployee,
+  useEmployees,
+  useUpdateEmployee,
+} from './queries'
 import { server } from '../../mocks/server'
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -112,6 +118,154 @@ describe('useEmployees', () => {
     del.current.mutate('11111111-1111-1111-1111-111111111111')
 
     await waitFor(() => expect(listCallCount).toBeGreaterThan(initialCount))
+  })
+
+  it('useEmployee fetches an employee by id', async () => {
+    server.use(
+      http.get('*/employees/:id', () =>
+        HttpResponse.json({
+          id: '11111111-1111-1111-1111-111111111111',
+          full_name: 'Ada Lovelace',
+          email: 'ada@example.com',
+          job_title: 'Engineer',
+          department: 'engineering',
+          country: 'GB',
+          salary_cents: 12_000_000,
+          employment_type: 'full_time',
+          hire_date: '2024-01-15',
+          is_deleted: false,
+          created_at: '2024-01-15T00:00:00Z',
+          updated_at: '2024-01-15T00:00:00Z',
+        }),
+      ),
+    )
+
+    const { result } = renderHook(
+      () => useEmployee('11111111-1111-1111-1111-111111111111'),
+      { wrapper },
+    )
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.full_name).toBe('Ada Lovelace')
+  })
+
+  it('useCreateEmployee invalidates list on success', async () => {
+    let listCalls = 0
+    server.use(
+      http.get('*/employees', () => {
+        listCalls++
+        return HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 })
+      }),
+      http.post('*/employees', () =>
+        HttpResponse.json(
+          {
+            id: '22222222-2222-2222-2222-222222222222',
+            full_name: 'New Hire',
+            email: 'new@example.com',
+            job_title: 'Engineer',
+            department: 'engineering',
+            country: 'US',
+            salary_cents: 10_000_000,
+            employment_type: 'full_time',
+            hire_date: '2024-05-01',
+            is_deleted: false,
+            created_at: '2024-05-01T00:00:00Z',
+            updated_at: '2024-05-01T00:00:00Z',
+          },
+          { status: 201 },
+        ),
+      ),
+    )
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const sharedWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    const { result: list } = renderHook(() => useEmployees({}), { wrapper: sharedWrapper })
+    await waitFor(() => expect(list.current.isSuccess).toBe(true))
+    const initial = listCalls
+
+    const { result: create } = renderHook(() => useCreateEmployee(), { wrapper: sharedWrapper })
+    create.current.mutate({
+      full_name: 'New Hire',
+      email: 'new@example.com',
+      job_title: 'Engineer',
+      department: 'engineering',
+      country: 'US',
+      salary_cents: 10_000_000,
+      employment_type: 'full_time',
+      hire_date: '2024-05-01',
+    })
+
+    await waitFor(() => expect(listCalls).toBeGreaterThan(initial))
+  })
+
+  it('useUpdateEmployee invalidates list and detail on success', async () => {
+    let listCalls = 0
+    let detailCalls = 0
+    server.use(
+      http.get('*/employees', () => {
+        listCalls++
+        return HttpResponse.json({ items: [], total: 0, page: 1, page_size: 50 })
+      }),
+      http.get('*/employees/:id', () => {
+        detailCalls++
+        return HttpResponse.json({
+          id: '11111111-1111-1111-1111-111111111111',
+          full_name: 'Ada Lovelace',
+          email: 'ada@example.com',
+          job_title: 'Engineer',
+          department: 'engineering',
+          country: 'GB',
+          salary_cents: 12_000_000,
+          employment_type: 'full_time',
+          hire_date: '2024-01-15',
+          is_deleted: false,
+          created_at: '2024-01-15T00:00:00Z',
+          updated_at: '2024-01-15T00:00:00Z',
+        })
+      }),
+      http.patch('*/employees/:id', () =>
+        HttpResponse.json({
+          id: '11111111-1111-1111-1111-111111111111',
+          full_name: 'Ada Lovelace',
+          email: 'ada.new@example.com',
+          job_title: 'Engineer',
+          department: 'engineering',
+          country: 'GB',
+          salary_cents: 12_000_000,
+          employment_type: 'full_time',
+          hire_date: '2024-01-15',
+          is_deleted: false,
+          created_at: '2024-01-15T00:00:00Z',
+          updated_at: '2024-05-18T00:00:00Z',
+        }),
+      ),
+    )
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const sharedWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    const { result: list } = renderHook(() => useEmployees({}), { wrapper: sharedWrapper })
+    await waitFor(() => expect(list.current.isSuccess).toBe(true))
+    const { result: detail } = renderHook(
+      () => useEmployee('11111111-1111-1111-1111-111111111111'),
+      { wrapper: sharedWrapper },
+    )
+    await waitFor(() => expect(detail.current.isSuccess).toBe(true))
+    const initialList = listCalls
+    const initialDetail = detailCalls
+
+    const { result: update } = renderHook(() => useUpdateEmployee(), { wrapper: sharedWrapper })
+    update.current.mutate({
+      id: '11111111-1111-1111-1111-111111111111',
+      input: { email: 'ada.new@example.com' },
+    })
+
+    await waitFor(() => expect(listCalls).toBeGreaterThan(initialList))
+    await waitFor(() => expect(detailCalls).toBeGreaterThan(initialDetail))
   })
 
   it('keeps previous data while fetching with new params', async () => {
