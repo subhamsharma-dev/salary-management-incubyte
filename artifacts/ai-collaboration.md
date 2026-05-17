@@ -332,6 +332,33 @@ The harness blocked several actions Claude would have refused anyway:
   - Code-based TanStack Router for 3-4 routes — file-based codegen earns its keep at ~20 routes, not 4.
   - `humanize()` inline rather than a util module — single consumer page; extract when cycle 5/6 displays department labels elsewhere.
 
+### Frontend detail / create / edit pages
+- Commits: 31e0c09..872d764 (8 mini-cycles: api → hooks → form → routes → detail → new → edit → list integration).
+- Approaches proposed: (a) Minimum (create only) | (b) Standard (create + edit, no read-only detail) | (c) Robust (separate detail + create + edit) → picked **(c)**. Row-interaction sub-question: (i) row click everywhere | (ii) Name as Link | (iii) Edit icon column → picked **(i) row click**.
+- Sub-choices: dollars input that converts to cents on submit (preserves backend integer-cents contract); `formatCurrency` via `Intl.NumberFormat`; `humanize()` and `formatCurrency` extracted to `src/lib/format.ts` (Rule of Three: list, form, detail consumers); plain controlled form with `useState` per field (handoff mandate, no `react-hook-form`); server-side validation only — mutation.error displayed generically; all 4 routes as siblings under root, not nested; `createTestRouter` expanded to register all routes once, swapping stubs to real components as each landed.
+- Most useful prompt or moment: The fast-forward "speedrun" mode (one log at end, auto-commit) — let cycle 5 land in one continuous flow without 8 separate propose-approve gates. Trade-off: when a test failed (humanize('full_time') = 'Full Time' not 'Full time'; Detail-page Edit click stale stub assertion after 5.6 wired real EmployeeEditPage), fixes happened silently mid-cycle rather than surfacing as a teaching moment.
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed:
+  - Verified backend `CreateEmployeeInput` / `UpdateEmployeeInput` shapes by reading `services/employee.py` before writing the api functions — required vs optional fields, enum types, `salary_cents: int`. Saved a typo round-trip.
+  - `humanize('full_time')` produces `'Full Time'` (Title-case every word, per cycle 4.6 lock), not `'Full time'`. Mid-cycle assertion bug caught by the test runner; honest correction in the same commit.
+  - TanStack Router's prefix-tree matching means `/employees/new` (literal) wins over `/employees/$id` (param) regardless of registration order — no manual ordering workaround needed.
+  - `createTestRouter` had to grow alongside cycle 5: start with all 4 routes registered (stubs for not-yet-implemented pages), swap each stub to the real component as the matching page commit landed. Single test-router file serves all page tests.
+  - Detail-page test asserted `'Edit stub'` (the stub destination) was visible after clicking Edit. When cycle 5.6 swapped the stub for the real `EmployeeEditPage`, the assertion broke (now `'Edit employee'` h2 is rendered). Caught in test run; fixed in the same cycle 5.6 commit.
+  - `stopPropagation()` on the per-row delete-button click — otherwise the row's onClick would also fire and navigate to the detail page in the same gesture as opening the AlertDialog.
+  - All hooks (`useMemo`, `useReactTable`, `useState`) must be called before the early returns (`if (isPending) return …`) per Rules of Hooks. EmployeeListPage and EmployeeDetailPage both follow this discipline.
+  - `useParams({ from: '/employees/$id' })` and `useParams({ from: '/employees/$id/edit' })` typed via the route's path literal — matches the `useSearch({ from: '/employees' })` pattern from cycle 4.3.
+  - jsdom date-input quirks: `userEvent.type` is unreliable on `type="date"` inputs; `fireEvent.change` with target.value is more deterministic.
+  - 8 mini-cycles, 8 commits, 31 frontend tests — squashed test+feat shape inherited from cycle 2.2 precedent; refactor (humanize/formatCurrency extraction) bundled with the cycle 5.4 feat (charitable reading: helper was always part of the detail-page's initial implementation).
+- TDD discipline overrides:
+  - **Rule 4 speedrun**: developer authorized fast-forward mode — Claude moved through all 8 mini-cycles without proposing-and-waiting between gates; auto-committed each cycle without per-commit approval; surfaced only blockers (humanize assertion bug, stale-stub assertion) and the final commit message proposals. **Logged here per Rule 4's "Never silently skip" mandate.** Reason: developer's explicit speedrun choice, accepting that mid-cycle bug catches happen via test failures rather than via review-gate dialogue.
+  - Cycle 5.3 (route registration with placeholder components) is the same kind of §12 escape hatch chore as cycle 4.0a / 4.9 — infrastructure stitching, no behaviour test of its own.
+- Notable Rule 5 callouts:
+  - Dollars-in-form, cents-on-the-wire — UX-friendly input, backend contract intact.
+  - `formatCurrency` via stdlib `Intl.NumberFormat` — zero new deps; same helper will serve cycle 6 insights.
+  - Rule of Three triggered on `humanize` at cycle 5.4 — list, form, detail = 3 consumers → extracted to `src/lib/format.ts`. The list page's inline copy lives on (not retroactively refactored) — mild duplication is acceptable; future refactor when someone touches the list page next.
+  - Detail page uses `<dl>` for label-value pairs instead of a card grid of `<p>` — semantically right; CSS grid styles it visually.
+  - Single shared `EmployeeForm` for create + edit, mode-detected via presence of `defaultValues` — avoids two near-identical form components.
+
 ---
 
 ## Closing notes
