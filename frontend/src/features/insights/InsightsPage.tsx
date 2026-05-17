@@ -59,7 +59,7 @@ export function InsightsPage() {
               <XAxis dataKey="country" />
               <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value * 100)}
+                formatter={(value) => formatCurrency(Number(value) * 100)}
               />
               <Legend />
               <Bar dataKey="min" fill="#94a3b8" name="Min" />
@@ -86,7 +86,7 @@ export function InsightsPage() {
               />
               <YAxis type="category" dataKey="label" width={200} />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value * 100)}
+                formatter={(value) => formatCurrency(Number(value) * 100)}
               />
               <Bar dataKey="avg" fill="#0f172a" name="Average salary" />
             </BarChart>
