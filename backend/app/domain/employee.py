@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime, timezone
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain.country import Country
 from app.domain.department import Department
@@ -29,3 +29,10 @@ class Employee(BaseModel):
     is_deleted: bool = False
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
+
+    @field_validator("hire_date")
+    @classmethod
+    def _hire_date_not_in_future(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("hire_date cannot be in the future")
+        return value
