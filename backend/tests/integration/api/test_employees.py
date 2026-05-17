@@ -1,5 +1,7 @@
 import uuid
 
+from app.domain.country import Country
+from app.domain.email import Email
 from app.domain.employee import Employee
 from tests.factories import valid_employee_kwargs
 
@@ -38,3 +40,48 @@ def test_get_employee_by_id_returns_404_when_not_found(client):
     response = client.get(f"/employees/{uuid.uuid4()}")
 
     assert response.status_code == 404
+
+
+def test_get_employees_returns_paginated_list(client, employee_repository):
+    employee_repository.add(Employee(**valid_employee_kwargs(
+        email=Email(address="a@example.com"),
+    )))
+    employee_repository.add(Employee(**valid_employee_kwargs(
+        email=Email(address="b@example.com"),
+    )))
+
+    response = client.get("/employees")
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["total"] == 2
+    assert len(body["items"]) == 2
+
+
+def test_get_employees_supports_filter_by_country(client, employee_repository):
+    employee_repository.add(Employee(**valid_employee_kwargs(
+        email=Email(address="us@example.com"), country=Country(code="US"),
+    )))
+    employee_repository.add(Employee(**valid_employee_kwargs(
+        email=Email(address="gb@example.com"), country=Country(code="GB"),
+    )))
+
+    response = client.get("/employees?country=US")
+
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["country"] == "US"
+
+
+def test_get_employees_supports_search_q(client, employee_repository):
+    employee_repository.add(Employee(**valid_employee_kwargs(
+        email=Email(address="alice@example.com"), full_name="Alice Smith",
+    )))
+    employee_repository.add(Employee(**valid_employee_kwargs(
+        email=Email(address="bob@example.com"), full_name="Bob Jones",
+    )))
+
+    response = client.get("/employees?q=alice")
+
+    body = response.json()
+    assert body["total"] == 1
