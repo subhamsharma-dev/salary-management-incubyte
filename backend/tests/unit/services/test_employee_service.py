@@ -1,16 +1,21 @@
+import uuid
 from datetime import date
+
+import pytest
 
 from app.domain.country import Country
 from app.domain.department import Department
 from app.domain.email import Email
 from app.domain.employee import Employee
 from app.domain.employment_type import EmploymentType
-from app.services.employee import CreateEmployeeInput, EmployeeService
+from app.services.employee import CreateEmployeeInput, EmployeeService, UpdateEmployeeInput
 from tests.factories import valid_employee_kwargs
 from tests.fakes import InMemoryEmployeeRepository
 
 
-def _service_with_employees(*employees: Employee) -> tuple[EmployeeService, InMemoryEmployeeRepository]:
+def _service_with_employees(
+    *employees: Employee,
+) -> tuple[EmployeeService, InMemoryEmployeeRepository]:
     repo = InMemoryEmployeeRepository()
     for employee in employees:
         repo.add(employee)
@@ -88,3 +93,23 @@ def test_service_returns_avg_by_country_job_title():
     assert len(insights) == 1
     assert insights[0].country == "US"
     assert insights[0].job_title == "Engineer"
+
+
+def test_service_updates_employee_fields():
+    employee = Employee(**valid_employee_kwargs(full_name="Jane Doe"))
+    service, repo = _service_with_employees(employee)
+
+    updated = service.update_employee(
+        employee.id, UpdateEmployeeInput(full_name="Jane Smith")
+    )
+
+    assert updated.full_name == "Jane Smith"
+    assert repo.get(employee.id).full_name == "Jane Smith"
+
+
+def test_service_update_raises_when_employee_not_found():
+    repo = InMemoryEmployeeRepository()
+    service = EmployeeService(repo)
+
+    with pytest.raises(ValueError):
+        service.update_employee(uuid.uuid4(), UpdateEmployeeInput(full_name="X"))
