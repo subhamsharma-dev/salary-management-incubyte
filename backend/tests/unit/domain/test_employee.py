@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -57,3 +57,10 @@ def test_employee_rejects_invalid_full_name(full_name):
 def test_employee_rejects_invalid_job_title(job_title):
     with pytest.raises(ValueError):
         Employee(**_valid_employee_kwargs(job_title=job_title))
+
+
+def test_employee_rejects_future_hire_date():
+    tomorrow = date.today() + timedelta(days=1)
+
+    with pytest.raises(ValueError):
+        Employee(**_valid_employee_kwargs(hire_date=tomorrow))
