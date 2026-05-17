@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 
 
 @dataclass(frozen=True)
@@ -10,3 +11,7 @@ class Salary:
             raise TypeError("Salary cents must be int")
         if self.cents <= 0:
             raise ValueError("Salary cents must be positive")
+
+    @classmethod
+    def from_dollars(cls, dollars: int) -> Self:
+        return cls(cents=dollars * 100)
