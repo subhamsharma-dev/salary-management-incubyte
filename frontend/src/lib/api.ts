@@ -55,3 +55,51 @@ export async function deleteEmployee(id: string): Promise<void> {
     throw new Error(`Failed to delete employee: ${response.status}`)
   }
 }
+
+export interface CreateEmployeeInput {
+  full_name: string
+  email: string
+  job_title: string
+  department: string
+  country: string
+  salary_cents: number
+  employment_type: string
+  hire_date: string
+}
+
+export type UpdateEmployeeInput = Partial<CreateEmployeeInput>
+
+export async function getEmployee(id: string): Promise<Employee> {
+  const response = await fetch(`${BASE_URL}/employees/${id}`)
+  if (!response.ok) {
+    throw new Error(`Failed to get employee: ${response.status}`)
+  }
+  return (await response.json()) as Employee
+}
+
+export async function createEmployee(input: CreateEmployeeInput): Promise<Employee> {
+  const response = await fetch(`${BASE_URL}/employees`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to create employee: ${response.status}`)
+  }
+  return (await response.json()) as Employee
+}
+
+export async function updateEmployee(
+  id: string,
+  input: UpdateEmployeeInput,
+): Promise<Employee> {
+  const response = await fetch(`${BASE_URL}/employees/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update employee: ${response.status}`)
+  }
+  return (await response.json()) as Employee
+}

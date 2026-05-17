@@ -1,7 +1,13 @@
 import { http, HttpResponse } from 'msw'
 import { describe, it, expect } from 'vitest'
 
-import { deleteEmployee, listEmployees } from './api'
+import {
+  createEmployee,
+  deleteEmployee,
+  getEmployee,
+  listEmployees,
+  updateEmployee,
+} from './api'
 import { server } from '../mocks/server'
 
 describe('listEmployees', () => {
@@ -78,5 +84,105 @@ describe('listEmployees', () => {
 
     expect(capturedMethod).toBe('DELETE')
     expect(capturedUrl).toContain('/employees/11111111-1111-1111-1111-111111111111')
+  })
+
+  it('fetches an employee by id', async () => {
+    server.use(
+      http.get('*/employees/:id', () =>
+        HttpResponse.json({
+          id: '11111111-1111-1111-1111-111111111111',
+          full_name: 'Ada Lovelace',
+          email: 'ada@example.com',
+          job_title: 'Engineer',
+          department: 'engineering',
+          country: 'GB',
+          salary_cents: 12_000_000,
+          employment_type: 'full_time',
+          hire_date: '2024-01-15',
+          is_deleted: false,
+          created_at: '2024-01-15T00:00:00Z',
+          updated_at: '2024-01-15T00:00:00Z',
+        }),
+      ),
+    )
+
+    const employee = await getEmployee('11111111-1111-1111-1111-111111111111')
+
+    expect(employee.full_name).toBe('Ada Lovelace')
+    expect(employee.email).toBe('ada@example.com')
+  })
+
+  it('creates an employee with POST payload', async () => {
+    let capturedBody: unknown = null
+    server.use(
+      http.post('*/employees', async ({ request }) => {
+        capturedBody = await request.json()
+        return HttpResponse.json(
+          {
+            id: '22222222-2222-2222-2222-222222222222',
+            full_name: 'New Hire',
+            email: 'new@example.com',
+            job_title: 'Engineer',
+            department: 'engineering',
+            country: 'US',
+            salary_cents: 10_000_000,
+            employment_type: 'full_time',
+            hire_date: '2024-05-01',
+            is_deleted: false,
+            created_at: '2024-05-01T00:00:00Z',
+            updated_at: '2024-05-01T00:00:00Z',
+          },
+          { status: 201 },
+        )
+      }),
+    )
+
+    const created = await createEmployee({
+      full_name: 'New Hire',
+      email: 'new@example.com',
+      job_title: 'Engineer',
+      department: 'engineering',
+      country: 'US',
+      salary_cents: 10_000_000,
+      employment_type: 'full_time',
+      hire_date: '2024-05-01',
+    })
+
+    expect(created.id).toBe('22222222-2222-2222-2222-222222222222')
+    expect((capturedBody as { email: string }).email).toBe('new@example.com')
+  })
+
+  it('updates an employee with PATCH payload', async () => {
+    let capturedBody: unknown = null
+    let capturedUrl = ''
+    server.use(
+      http.patch('*/employees/:id', async ({ request }) => {
+        capturedUrl = request.url
+        capturedBody = await request.json()
+        return HttpResponse.json({
+          id: '11111111-1111-1111-1111-111111111111',
+          full_name: 'Ada Lovelace',
+          email: 'ada.new@example.com',
+          job_title: 'Senior Engineer',
+          department: 'engineering',
+          country: 'GB',
+          salary_cents: 15_000_000,
+          employment_type: 'full_time',
+          hire_date: '2024-01-15',
+          is_deleted: false,
+          created_at: '2024-01-15T00:00:00Z',
+          updated_at: '2024-05-18T00:00:00Z',
+        })
+      }),
+    )
+
+    const updated = await updateEmployee('11111111-1111-1111-1111-111111111111', {
+      email: 'ada.new@example.com',
+      job_title: 'Senior Engineer',
+    })
+
+    expect(updated.email).toBe('ada.new@example.com')
+    expect(capturedUrl).toContain('/employees/11111111-1111-1111-1111-111111111111')
+    expect((capturedBody as { job_title: string }).job_title).toBe('Senior Engineer')
   })
 })
