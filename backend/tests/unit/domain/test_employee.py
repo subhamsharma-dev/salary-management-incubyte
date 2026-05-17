@@ -11,17 +11,22 @@ from app.domain.employment_type import EmploymentType
 from app.domain.salary import Salary
 
 
+def _valid_employee_kwargs(**overrides):
+    return {
+        "full_name": "Jane Doe",
+        "email": Email(address="jane@example.com"),
+        "job_title": "Senior Engineer",
+        "department": Department.ENGINEERING,
+        "country": Country(code="US"),
+        "salary": Salary(cents=12_000_000),
+        "employment_type": EmploymentType.FULL_TIME,
+        "hire_date": date(2020, 1, 15),
+        **overrides,
+    }
+
+
 def test_employee_stores_provided_fields():
-    employee = Employee(
-        full_name="Jane Doe",
-        email=Email(address="jane@example.com"),
-        job_title="Senior Engineer",
-        department=Department.ENGINEERING,
-        country=Country(code="US"),
-        salary=Salary(cents=12_000_000),
-        employment_type=EmploymentType.FULL_TIME,
-        hire_date=date(2020, 1, 15),
-    )
+    employee = Employee(**_valid_employee_kwargs())
 
     assert employee.full_name == "Jane Doe"
     assert employee.email.address == "jane@example.com"
@@ -32,16 +37,7 @@ def test_employee_stores_provided_fields():
 def test_employee_sets_sensible_defaults_for_server_fields():
     before = datetime.now(timezone.utc)
 
-    employee = Employee(
-        full_name="Jane Doe",
-        email=Email(address="jane@example.com"),
-        job_title="Senior Engineer",
-        department=Department.ENGINEERING,
-        country=Country(code="US"),
-        salary=Salary(cents=12_000_000),
-        employment_type=EmploymentType.FULL_TIME,
-        hire_date=date(2020, 1, 15),
-    )
+    employee = Employee(**_valid_employee_kwargs())
 
     after = datetime.now(timezone.utc)
 
@@ -54,13 +50,4 @@ def test_employee_sets_sensible_defaults_for_server_fields():
 @pytest.mark.parametrize("full_name", ["", "a" * 201])
 def test_employee_rejects_invalid_full_name(full_name):
     with pytest.raises(ValueError):
-        Employee(
-            full_name=full_name,
-            email=Email(address="jane@example.com"),
-            job_title="Senior Engineer",
-            department=Department.ENGINEERING,
-            country=Country(code="US"),
-            salary=Salary(cents=12_000_000),
-            employment_type=EmploymentType.FULL_TIME,
-            hire_date=date(2020, 1, 15),
-        )
+        Employee(**_valid_employee_kwargs(full_name=full_name))
