@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 
 import { EmployeeDetailPage } from '../features/employees/edit/EmployeeDetailPage'
+import { EmployeeEditPage } from '../features/employees/edit/EmployeeEditPage'
 import { EmployeeNewPage } from '../features/employees/edit/EmployeeNewPage'
 import { EmployeeListPage } from '../features/employees/list/EmployeeListPage'
 import { employeesSearchSchema } from '../features/employees/searchSchema'
@@ -36,7 +37,7 @@ export function createTestRouter(initialEntries: string[]) {
   const employeeEditRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/employees/$id/edit',
-    component: () => <p>Edit stub</p>,
+    component: EmployeeEditPage,
   })
 
   return createRouter({

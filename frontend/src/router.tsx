@@ -7,6 +7,8 @@ import {
 } from '@tanstack/react-router'
 
 import { Layout } from './components/Layout'
+import { EmployeeDetailPage } from './features/employees/edit/EmployeeDetailPage'
+import { EmployeeEditPage } from './features/employees/edit/EmployeeEditPage'
 import { EmployeeNewPage } from './features/employees/edit/EmployeeNewPage'
 import { EmployeeListPage } from './features/employees/list/EmployeeListPage'
 import { employeesSearchSchema } from './features/employees/searchSchema'
@@ -43,13 +45,13 @@ const employeesNewRoute = createRoute({
 const employeeDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/employees/$id',
-  component: () => <p>Employee detail — coming soon…</p>,
+  component: EmployeeDetailPage,
 })
 
 const employeeEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/employees/$id/edit',
-  component: () => <p>Employee edit — coming soon…</p>,
+  component: EmployeeEditPage,
 })
 
 const routeTree = rootRoute.addChildren([

@@ -49,6 +49,6 @@ describe('EmployeeDetailPage', () => {
     expect(screen.getByText('Full Time')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /^edit$/i }))
-    await screen.findByText('Edit stub')
+    await screen.findByText('Edit employee')
   })
 })
