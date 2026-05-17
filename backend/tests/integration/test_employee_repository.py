@@ -55,3 +55,42 @@ def test_repository_list_returns_paginated_page(employee_repository):
     assert len(page.items) == 2
     assert page.page == 2
     assert page.page_size == 2
+
+
+def test_repository_list_filters_by_country(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="us@example.com"), country=Country(code="US"),
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="gb@example.com"), country=Country(code="GB"),
+    )))
+
+    page = employee_repository.list(country="US")
+
+    assert {e.email.address for e in page.items} == {"us@example.com"}
+
+
+def test_repository_list_filters_by_job_title(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="eng@example.com"), job_title="Senior Engineer",
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="mgr@example.com"), job_title="Engineering Manager",
+    )))
+
+    page = employee_repository.list(job_title="Senior Engineer")
+
+    assert {e.email.address for e in page.items} == {"eng@example.com"}
+
+
+def test_repository_list_filters_by_department(employee_repository):
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="e1@example.com"), department=Department.ENGINEERING,
+    )))
+    employee_repository.add(Employee(**_valid_employee_kwargs(
+        email=Email(address="e2@example.com"), department=Department.SALES,
+    )))
+
+    page = employee_repository.list(department=Department.ENGINEERING)
+
+    assert {e.email.address for e in page.items} == {"e1@example.com"}
