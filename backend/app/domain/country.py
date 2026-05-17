@@ -12,7 +12,7 @@ _VALID_CODES: frozenset[str] = frozenset(
 
 
 class Country(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, strict=True)
 
     code: str
 

@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 
 class Email(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, strict=True)
 
     address: EmailStr
 

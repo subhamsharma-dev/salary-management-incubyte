@@ -15,7 +15,7 @@ def _now() -> datetime:
 
 
 class Employee(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, strict=True)
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     full_name: str = Field(min_length=1, max_length=200)

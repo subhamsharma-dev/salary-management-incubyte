@@ -1,12 +1,12 @@
 from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Salary(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, strict=True)
 
-    cents: StrictInt = Field(gt=0)
+    cents: int = Field(gt=0)
 
     @classmethod
     def from_dollars(cls, dollars: int) -> Self:
