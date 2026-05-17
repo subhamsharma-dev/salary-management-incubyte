@@ -50,7 +50,7 @@ erDiagram
         string job_title
         string department
         string country
-        decimal salary
+        int salary_cents
         enum employment_type
         date hire_date
         boolean is_deleted

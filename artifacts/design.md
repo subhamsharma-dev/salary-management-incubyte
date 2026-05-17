@@ -33,7 +33,7 @@ See `architecture.md` for the diagrams.
 | job_title | str | ≤100 chars |
 | department | str | from a fixed list |
 | country | str | ISO-3166 alpha-2 |
-| salary | Decimal | USD, > 0 |
+| salary | int (cents) | USD cents, > 0 — integer cents avoids float/Decimal rounding bugs in aggregates |
 | employment_type | enum | full_time / part_time / contractor |
 | hire_date | date | not in future |
 | is_deleted | bool | soft delete |
