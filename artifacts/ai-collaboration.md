@@ -45,7 +45,24 @@ Every cycle begins with Claude proposing one failing test; developer confirms.
 
 ## Features
 
-(Append one entry per feature as the build progresses.)
+### Employee domain model
+- Commits: 9d77b1a..9f57500 (Salary → Country → Email → EmploymentType → Department → Employee aggregate)
+- Approaches proposed: minimum | standard | robust → picked **standard** (one value-object per concept)
+- Most useful prompt or moment: _TODO_
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed: _TODO_
+- TDD discipline overrides:
+  - Email format-rejection test landed as characterization after Pydantic port (Rule 4); logged in Design pivots.
+  - Employee `_sets_sensible_defaults_for_server_fields` passed from first run because cycle 1's prod code already set sensible defaults; called out in-thread.
+- Notable Rule 5 callouts: integer cents for money; EmailStr rejects single-label domains by default; StrEnum vs plain Enum; SQLite has no native percentile (deferred to repository layer's aggregation cycles).
+
+### Backend tooling chore pass
+- Commits: 2988772..83e8d39 (Pydantic strict=True across domain; ruff + mypy with strict-on-domain; Makefile)
+- Approaches proposed: n/a (closing-the-loop chore, not a feature menu)
+- Most useful prompt or moment: _TODO_
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed: _TODO_
+- TDD discipline overrides: none (refactors with tests staying green at each step).
 
 ---
 
