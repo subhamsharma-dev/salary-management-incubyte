@@ -265,8 +265,8 @@ The harness blocked several actions Claude would have refused anyway:
 - Commits: f3544f2..7160543 (Tailwind v4 + Vite plugin → Layout TDD → App consumes Layout → shadcn init with Button)
 - Approaches proposed: (a) Minimum (Tailwind only, defer shadcn) | (b) Standard (Tailwind + shadcn + Button + Layout) | (c) Robust (full chrome) → picked **(b)**. Sub-question (Tailwind major): (i) v4 | (ii) v3 → picked **(i) v4**.
 - Sub-choices: Radix base (over Base UI); Nova preset (Lucide + Geist); named export `Layout`; `@/*` path alias.
-- Most useful prompt or moment: _TODO_
-- What I rejected from Claude's suggestions: _TODO_
+- Most useful prompt or moment: The `shadcn@latest init --help` check before invoking it — surfaced that the CLI's flag surface had drifted (`--base-color` gone, preset names plain `nova` not `radix-nova`). Without that check the init would have hung on an interactive prompt mid-cycle. "Verify the tool before using it" discipline saved 5-10 minutes of debugging a hung process.
+- What I rejected from Claude's suggestions: Few real pushbacks at this stage — mostly accepted Claude's recommended path (b)+(i). The visible call-out: rejected the §9-example separate `test → feat` commit shape in cycle 2.2 in favor of a squashed `feat: ... with tests` to avoid a transiently-red HEAD between commits. That shape then became the cycle-default for the rest of the frontend build.
 - What Claude flagged that I would have missed:
   - Mini-cycle ordering — install Tailwind *before* the Layout TDD cycle so Layout is authored once with classes, not retrofitted in two passes.
   - shadcn 4.7 flag surface had drifted: `--base-color` no longer exists; preset naming is plain `nova`, not `radix-nova`. Surfaced via `init --help` before invoking; would otherwise have hung on interactive prompts.
@@ -285,8 +285,8 @@ The harness blocked several actions Claude would have refused anyway:
 - Commits: 7f73323..75198ff (deps → api client + test → useEmployees hook + test → QueryClientProvider wired)
 - Approaches proposed: (a) Minimum (api.ts only, no Query/MSW) | (b) Standard (full handoff scope: api + Query + MSW + hook + provider) | (c) Robust (b + zod + key factory + retry config) → picked **(b)**. Sub-question (response typing): (i) hand-written TS interfaces | (ii) zod schemas → picked **(i)**.
 - Sub-choices: `@tanstack/react-query` 5.100.10 + `msw` 2.14.6; `useQuery` over `useSuspenseQuery`; MSW `setupServer` for Node tests; `onUnhandledRequest: 'error'`; `server.use(...)` per-test; module-scope `queryClient` in `main.tsx`.
-- Most useful prompt or moment: _TODO_
-- What I rejected from Claude's suggestions: _TODO_
+- Most useful prompt or moment: The API-shape spot-check before any test landed. The initial Rule-2 menu had `listEmployees(): Promise<Employee[]>` — wrong. Reading `schemas/employee.py` first surfaced the paginated envelope (`{ items, total, page, page_size }`), so the test fixture and the type both matched reality from cycle 3.1 onward. Saved a "tests pass but data shape is wrong at runtime" round-trip.
+- What I rejected from Claude's suggestions: (c) Robust (zod + query-key factory + retry config) — explicitly rejected zod runtime validation as premature for a single consumer; explicitly rejected the key factory until invalidation patterns get non-trivial. Both were Rule 5 / Rule of Three calls.
 - What Claude flagged that I would have missed:
   - Initial Rule-2 menu wrongly typed `listEmployees(): Promise<Employee[]>` — the real `GET /employees` returns the paginated envelope `{ items, total, page, page_size }`. Caught at API spot-check before any test landed.
   - Live endpoint verified via `curl -o nul -w "HTTP %{http_code}"` before writing the test (HTTP 200) — saved a phantom-failure investigation if the prod URL had been wrong.
@@ -337,7 +337,7 @@ The harness blocked several actions Claude would have refused anyway:
 - Approaches proposed: (a) Minimum (create only) | (b) Standard (create + edit, no read-only detail) | (c) Robust (separate detail + create + edit) → picked **(c)**. Row-interaction sub-question: (i) row click everywhere | (ii) Name as Link | (iii) Edit icon column → picked **(i) row click**.
 - Sub-choices: dollars input that converts to cents on submit (preserves backend integer-cents contract); `formatCurrency` via `Intl.NumberFormat`; `humanize()` and `formatCurrency` extracted to `src/lib/format.ts` (Rule of Three: list, form, detail consumers); plain controlled form with `useState` per field (handoff mandate, no `react-hook-form`); server-side validation only — mutation.error displayed generically; all 4 routes as siblings under root, not nested; `createTestRouter` expanded to register all routes once, swapping stubs to real components as each landed.
 - Most useful prompt or moment: The fast-forward "speedrun" mode (one log at end, auto-commit) — let cycle 5 land in one continuous flow without 8 separate propose-approve gates. Trade-off: when a test failed (humanize('full_time') = 'Full Time' not 'Full time'; Detail-page Edit click stale stub assertion after 5.6 wired real EmployeeEditPage), fixes happened silently mid-cycle rather than surfacing as a teaching moment.
-- What I rejected from Claude's suggestions: _TODO_
+- What I rejected from Claude's suggestions: Claude's default "full discipline" pace at the start of cycle 5 — opted into speedrun (one log at end, auto-commit) which traded design-conversation depth for build velocity. Knowingly took the trade-off; the closing notes' point 3 reflects on the actual consequences.
 - What Claude flagged that I would have missed:
   - Verified backend `CreateEmployeeInput` / `UpdateEmployeeInput` shapes by reading `services/employee.py` before writing the api functions — required vs optional fields, enum types, `salary_cents: int`. Saved a typo round-trip.
   - `humanize('full_time')` produces `'Full Time'` (Title-case every word, per cycle 4.6 lock), not `'Full time'`. Mid-cycle assertion bug caught by the test runner; honest correction in the same commit.
@@ -363,8 +363,8 @@ The harness blocked several actions Claude would have refused anyway:
 - Commits: c8d7694..3ef9041 (5 commits: api → hooks → page+route → tooltip-type fix → list-page nav button).
 - Approaches proposed: n/a — handoff was explicit ("Two Recharts charts: by-country, by-country-job-title").
 - Sub-choices: BarChart with 6 series (min/p25/median/avg/p75/max) per country for chart 1 — Recharts has no native box plot; grouped bars are the pragmatic fit. Horizontal BarChart with top-15 limit for chart 2 — flattens (country, job_title) onto one axis and avoids 200-bar mess. Cents converted to dollars at the page boundary for tick formatting; `formatCurrency` (extracted in cycle 5) handles tooltip display. Inline-styled fixed-height container wraps each ResponsiveContainer — jsdom-friendly, prevents collapse-to-zero.
-- Most useful prompt or moment: _TODO_
-- What I rejected from Claude's suggestions: _TODO_
+- Most useful prompt or moment: The build-time Recharts Tooltip type break right after cycle 6.3 committed. Vitest passes (esbuild skips types) so the bug shipped to a green commit; `npm run build` was the first place it surfaced. Reminder that "tests green" and "build green" are two different gates — both belong in CI before any push.
+- What I rejected from Claude's suggestions: Nothing notable — cycle 6 followed handoff specs and Claude's defaults (BarChart with grouped series, top-15 for chart 2). Speedrun mode continued from cycle 5 without revisiting the override.
 - What Claude flagged that I would have missed:
   - Verified `CountryInsightResponse` / `CountryJobTitleInsightResponse` schemas in `schemas/insights.py` before writing the api types — 8 cents fields on the country side, 4 on the job-title side.
   - Recharts `Tooltip` `formatter` prop has a broader signature than `(value: number) => string` — TS complained because `ValueType` is `number | string | undefined`. Build broke after cycle 6.3 lander; fixed via `Number(value) * 100` coercion in a follow-up fix commit. Tests didn't catch this (vitest uses esbuild and skips types) — surfaced at `npm run build`.
@@ -385,8 +385,8 @@ The harness blocked several actions Claude would have refused anyway:
 - Commits: this entry + `vercel.json` + README updates.
 - Approaches proposed: n/a — handoff was explicit ("frontend on Vercel").
 - Sub-choices: `vercel.json` with `rewrites: [{ source: "/(.*)", destination: "/index.html" }]` — the standard Vite SPA pattern; without it, direct navigation to `/employees/$id` or refresh on a sub-route 404s on Vercel's edge. Vercel auto-detects Vite (no `buildCommand` / `outputDirectory` override needed). `VITE_API_BASE_URL` left as a defaulted runtime fallback to the Fly.io URL — no Vercel env var needed unless someone wants to point production at a different backend.
-- Most useful prompt or moment: _TODO_
-- What I rejected from Claude's suggestions: _TODO_
+- Most useful prompt or moment: "deployed — https://salary-management-incubyte-sandy.vercel.app/" — the closing-the-loop moment. Up to that point the live app was theoretical; that URL turned the build into something a reviewer can actually click.
+- What I rejected from Claude's suggestions: Nothing — Vercel deploy was conventional once `vercel.json` was in place. The post-deploy audit was Claude-initiated and the developer accepted the dead-code cleanup (`App.css`, Vite starter assets, generic frontend README, `<title>frontend</title>`) without modification.
 - What Claude flagged that I would have missed:
   - SPA rewrites — Vite's dev server fakes client-side routing seamlessly; Vercel's static hosting doesn't, so `/employees/abc` would 404 without an explicit catch-all rewrite to `index.html`. Standard gotcha for first-time SPA deploys.
   - README "Live → App URL" still needs a real Vercel URL after the first `vercel --prod`. Marked TBD with a clear "fill in after first deploy" note.
