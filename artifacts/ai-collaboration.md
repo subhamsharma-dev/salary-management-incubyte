@@ -261,6 +261,47 @@ The harness blocked several actions Claude would have refused anyway:
     per CLAUDE.md §5's "lax on tests" rule.
 - TDD discipline overrides: none (refactors with tests staying green at each step).
 
+### Frontend baseline (Tailwind + shadcn)
+- Commits: f3544f2..7160543 (Tailwind v4 + Vite plugin → Layout TDD → App consumes Layout → shadcn init with Button)
+- Approaches proposed: (a) Minimum (Tailwind only, defer shadcn) | (b) Standard (Tailwind + shadcn + Button + Layout) | (c) Robust (full chrome) → picked **(b)**. Sub-question (Tailwind major): (i) v4 | (ii) v3 → picked **(i) v4**.
+- Sub-choices: Radix base (over Base UI); Nova preset (Lucide + Geist); named export `Layout`; `@/*` path alias.
+- Most useful prompt or moment: _TODO_
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed:
+  - Mini-cycle ordering — install Tailwind *before* the Layout TDD cycle so Layout is authored once with classes, not retrofitted in two passes.
+  - shadcn 4.7 flag surface had drifted: `--base-color` no longer exists; preset naming is plain `nova`, not `radix-nova`. Surfaced via `init --help` before invoking; would otherwise have hung on interactive prompts.
+  - tsconfig `paths` alias is a prerequisite for `shadcn init` — the CLI bails before writing files if the alias isn't present.
+  - TypeScript 6 treats `baseUrl` as a deprecation error (TS5101). Used `paths` without `baseUrl` (forward-compatible with TS 7 per the TS 4.1+ rule that paths resolve relative to the tsconfig dir).
+  - Vite v8 does not auto-resolve tsconfig paths at runtime; needed explicit `resolve.alias` in `vite.config.ts`. Without it, `button.tsx`'s `@/lib/utils` import would have failed at first use (cycle 4) and not now (button.tsx wasn't yet imported).
+  - Spike verification (§12) — temporarily imported `Button` into `App.tsx` to prove the `@` alias resolved end-to-end through Vite; module count went 17 → 125; reverted in same micro-cycle.
+- TDD discipline overrides: none. One Rule 4 trigger mid-cycle ("do everything" + "without logging") — declined per Rule 4's "Never silently skip"; ended in full discipline (option (b)).
+- Notable Rule 5 callouts:
+  - Tailwind v4 over v3: current Oxide engine, CSS-first `@theme` config.
+  - Radix-base over Base UI: long-time shadcn default; richer ecosystem.
+  - `paths` without `baseUrl`: forward-compatible with TS 7.
+  - Cycle-2.2 squashed commit shape (`feat: ... with tests`) chosen over the §9 example's separate `test → feat` pair to avoid a transiently-red HEAD between commits.
+
+### TanStack Query + typed API client
+- Commits: 7f73323..75198ff (deps → api client + test → useEmployees hook + test → QueryClientProvider wired)
+- Approaches proposed: (a) Minimum (api.ts only, no Query/MSW) | (b) Standard (full handoff scope: api + Query + MSW + hook + provider) | (c) Robust (b + zod + key factory + retry config) → picked **(b)**. Sub-question (response typing): (i) hand-written TS interfaces | (ii) zod schemas → picked **(i)**.
+- Sub-choices: `@tanstack/react-query` 5.100.10 + `msw` 2.14.6; `useQuery` over `useSuspenseQuery`; MSW `setupServer` for Node tests; `onUnhandledRequest: 'error'`; `server.use(...)` per-test; module-scope `queryClient` in `main.tsx`.
+- Most useful prompt or moment: _TODO_
+- What I rejected from Claude's suggestions: _TODO_
+- What Claude flagged that I would have missed:
+  - Initial Rule-2 menu wrongly typed `listEmployees(): Promise<Employee[]>` — the real `GET /employees` returns the paginated envelope `{ items, total, page, page_size }`. Caught at API spot-check before any test landed.
+  - Live endpoint verified via `curl -o nul -w "HTTP %{http_code}"` before writing the test (HTTP 200) — saved a phantom-failure investigation if the prod URL had been wrong.
+  - MSW v2 lifecycle (`beforeAll(server.listen)`, `afterEach(server.resetHandlers)`, `afterAll(server.close)`) with strict `onUnhandledRequest: 'error'` — loud failure on uncovered fetches, no silent real-network calls in tests.
+  - Wildcard `*/employees` URL in MSW handler decouples the test from `VITE_API_BASE_URL`. Test stays valid if the base URL changes.
+  - Inline `QueryClientProvider` wrapper in `queries.test.tsx` over a shared render util — Rule of Three not yet hit (one hook test today).
+  - `queryFn: listEmployees` (direct function ref) over `() => listEmployees()` — canonical pattern, identical behaviour.
+  - `queryKey: ['employees']` as a literal, not a factory — Rule of Three; factory pays off in cycle 5 when invalidation patterns get non-trivial.
+  - Module-scope `queryClient` in `main.tsx` — survives any rerenders or future routing changes.
+- TDD discipline overrides: none. Cycles 3.0 and 3.5 are infrastructure chores per §12 escape hatch (deps install + provider wiring; no behaviour test of their own). Cycles 3.1+3.2 and 3.3+3.4 used the squashed-commit shape (cycle-2.2 precedent).
+- Notable Rule 5 callouts:
+  - Paginated envelope shape (above).
+  - Hand-written TS interfaces over zod runtime validation — single consumer, schema lives in one place. Revisit when cycle 6's insights endpoints add richer shapes.
+  - `useEmployees()` no-args today; `queryKey: ['employees']` literal. Both grow in cycle 4 (params + key composition).
+
 ---
 
 ## Closing notes
