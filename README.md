@@ -7,7 +7,6 @@ Built test-first.
 
 - **App:** <https://salary-management-incubyte-sandy.vercel.app/>
 - **API:** <https://salary-management-incubyte.fly.dev> (`/docs` for OpenAPI)
-- **Demo video:** TBD
 
 ## Prerequisites
 
