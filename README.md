@@ -6,7 +6,7 @@ Built test-first.
 ## Live
 
 - **App:** TBD (frontend pending)
-- **API:** TBD (`/docs` for OpenAPI)
+- **API:** <https://salary-management-incubyte.fly.dev> (`/docs` for OpenAPI)
 - **Demo video:** TBD
 
 ## Prerequisites
