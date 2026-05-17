@@ -3,7 +3,9 @@ name = "salary-management-backend"
 version = "0.1.0"
 description = "Salary management tool for HR — backend"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "pydantic[email]>=2",
+]
 
 [dependency-groups]
 dev = [
