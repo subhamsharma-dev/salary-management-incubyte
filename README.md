@@ -49,22 +49,21 @@ Frontend → Vercel (TBD when the frontend lands).
 
 ## Seed
 
-Local (against `backend/app.db`):
+**The app auto-seeds 10,000 random employees on cold start when the `employees` table is empty** — first deploy comes up demo-ready with no manual step. The check is idempotent: subsequent cold starts see rows and skip seeding (no extra startup cost beyond a `SELECT COUNT(*)`).
+
+To re-seed manually (drop + repopulate):
 
 ```bash
+# locally (against backend/app.db)
 cd backend
 uv run python -m app.seed.run --count 10000 --reset
-```
 
-Production (against `/data/app.db` inside the Fly machine):
-
-```bash
+# in production (against /data/app.db on the Fly machine)
 fly ssh console -a salary-management-incubyte \
   -C "uv run --directory /app python -m app.seed.run --count 10000 --reset"
 ```
 
-`--reset` drops + recreates the schema before inserting. Omit to append.
-`--count` defaults to 10,000.
+`--reset` drops + recreates the schema before inserting. `--count` defaults to 10,000.
 
 ## Repo
 
